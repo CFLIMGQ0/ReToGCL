@@ -1,0 +1,287 @@
+# 模块化 BalanceGCL 的唯一模型装配清单。
+# `selected: "none"` 表示使用该位置的原始 BalanceGCL 默认模块；选择 idea 时，
+# 把 `selected` 改成对应 ID。每个模块最多选择一个 idea，论文模型总共选择三个模块。
+
+schema_version: 1
+
+model:
+  name: modular_balancegcl
+  base_model: balancegcl
+  task: graph_classification
+  hidden_dim: 32
+  layers: 3
+  idea_parameter_source: IDEA_PARA_MODULAR/DEFAULT_PARAMETERS.json
+  idea_design_source: IDEA-PARA.md
+  current_idea_results_note: >-
+    110 个 idea 已按本文件指定的真实 target module 完成跨七数据集顺序 ABC 筛选；
+    DEFAULT_PARAMETERS.json 保存每个 idea 的统一最优参数。两两组合只允许跨模块，
+    并严格按 M1 到 M8 的上游输出到下游输入顺序执行。
+
+assembly:
+  execution_order: [M1, M2, M3, M4, M5, M6, M7, M8]
+  paper_combination_size: 3
+  allow_baseline_only: true
+  allow_none: true
+  one_idea_per_module: true
+  reject_duplicate_target_module: true
+  parameters_when_selected_parameters_empty: global_defaults
+  connection_rule: upstream_output_to_downstream_input
+  loss_rule: >-
+    idea 应替换所属模块并沿 pipeline 传递输出；除 M8 或文档明确规定的辅助约束外，
+    不允许把多个 idea 简化成独立损失直接相加。
+
+modules:
+  M1:
+    name: graph_augmentation
+    description: 图增强、输入去污和掩码；输出两种增强图。
+    input: graph_batch
+    output: augmented_graph_pair
+    default: balancegcl_random_graph_augmenter
+    default_implementation: src.baselines.gcl_baselines.augment_graph
+    default_config:
+      candidates: [node_drop, edge_drop, attr_mask, subgraph]
+      ratio: 0.2
+    selected: "none"
+    selected_parameters: {}
+    allowed_ideas:
+      - {id: D7-I06, name: 非交换双去污算子}
+      - {id: D7-I10, name: 清洗—增强双层博弈}
+      - {id: D8-I06, name: 顺逆增强等变监督}
+      - {id: D11-I01, name: 可靠性反向掩码}
+      - {id: D11-I02, name: 点—边—环守恒掩码}
+      - {id: D11-I03, name: 共形难度课程掩码}
+      - {id: D11-I04, name: 反事实最小充分掩码}
+      - {id: D11-I05, name: 连续带宽×频带掩码}
+      - {id: D11-I06, name: 掩码博弈 Shapley 平衡}
+      - {id: D11-I07, name: 时间一致记忆掩码}
+      - {id: D11-I08, name: 真假掩码双解码器}
+      - {id: D11-I09, name: Möbius 子结构掩码}
+      - {id: D11-I10, name: 掩码恢复的跨尺度证明}
+
+  M2:
+    name: structure_encoder
+    description: 节点 GIN 与环、胞腔、超图等高阶消息编码；输出多层结构表示。
+    input: augmented_graph_pair
+    output: structure_encoding
+    default: balancegcl_gin_history
+    default_implementation: src.models.sota_graph_models.GINHistory
+    default_config:
+      hidden_dim: 32
+      layers: 3
+      activation: relu
+      normalization: batch_norm
+    selected: "none"
+    selected_parameters: {}
+    allowed_ideas:
+      - {id: D2-I01, name: 持久寿命加权环胞腔}
+      - {id: D2-I02, name: 环的边超图—节点超图对偶}
+      - {id: D2-I03, name: Hodge 残差反馈胞腔}
+      - {id: D2-I04, name: Möbius 反演环聚合}
+      - {id: D2-I05, name: 曲率预算的自适应环上限}
+      - {id: D2-I06, name: Hourglass 环消息}
+      - {id: D2-I07, name: 有向环的规范场提升}
+      - {id: D2-I08, name: 环—割互补网络}
+      - {id: D2-I09, name: 环可靠性共形筛选}
+      - {id: D2-I10, name: 拓扑相变温度提升}
+      - {id: D3-I01, name: 嵌套尺度超图塔}
+      - {id: D3-I04, name: 节点—边超图交换子}
+      - {id: D3-I10, name: 超图神经 ODE 尺度流}
+
+  M3:
+    name: graph_readout_and_fusion
+    description: 将节点、边、环、尺度和图级表示读出并融合为图表示。
+    input: structure_encoding
+    output: graph_representation
+    default: balancegcl_layerwise_sum_concat
+    default_implementation: src.models.balancegcl_modules.BalanceGCLReadout
+    default_config:
+      pooling: global_add_pool
+      layer_fusion: concat
+    selected: "none"
+    selected_parameters: {}
+    allowed_ideas:
+      - {id: D3-I06, name: 尺度因果干预门}
+      - {id: D3-I08, name: 多尺度超图专家的负载平衡路由}
+      - {id: D4-I01, name: 视图子集 Möbius 融合}
+      - {id: D4-I02, name: Shapley—DPP 组合选择}
+      - {id: D4-I03, name: 视图组合超图}
+      - {id: D4-I04, name: 非交换顺序融合}
+      - {id: D4-I05, name: 可靠性张量列车融合}
+      - {id: D4-I06, name: 视图反事实路由器}
+      - {id: D4-I07, name: PID 原子—Hodge 槽位耦合}
+      - {id: D4-I08, name: 树结构融合的可逆流}
+      - {id: D4-I09, name: 冲突质量守恒融合}
+      - {id: D4-I10, name: 组合课程融合}
+      - {id: D5-I01, name: 节点—边—环—图共形可靠性张量}
+      - {id: D5-I02, name: 证据冲突瀑布}
+      - {id: D5-I03, name: PAC-Bayes 粒度预算}
+      - {id: D5-I04, name: Jackknife-after-bootstrap 结构可靠性}
+      - {id: D5-I05, name: 可靠性守恒流}
+      - {id: D5-I06, name: 局部 Lipschitz 可靠性}
+      - {id: D5-I07, name: 互信息下界置信区间门}
+      - {id: D5-I08, name: 可靠性 Kalman 滤波}
+      - {id: D5-I09, name: 反事实可恢复可靠性}
+      - {id: D5-I10, name: 可靠性 Shapley 交互图}
+
+  M4:
+    name: semantic_relation_router
+    description: 估计相似度、语义关系、洁净权和不确定性，供正负样本模块使用。
+    input: graph_representation
+    output: relation_routing
+    default: balancegcl_semantic_prototype_router
+    default_implementation: src.models.balancegcl_modules.BalanceGCLSemanticRouter
+    default_config:
+      relation_source: learned_semantic_prototypes
+      contribution_margin: 0.01
+    selected: "none"
+    selected_parameters: {}
+    allowed_ideas:
+      - {id: D1-I01, name: 边界条件的三几何重心门}
+      - {id: D1-I02, name: 余层回路一致门}
+      - {id: D1-I03, name: 切空间—GW 双校准相似度}
+      - {id: D1-I04, name: 曲率反事实响应校准门}
+      - {id: D1-I05, name: 增强轨迹 Koopman 相似度}
+      - {id: D1-I06, name: 热带投影边界门}
+      - {id: D1-I07, name: Bures 协方差语义门}
+      - {id: D1-I08, name: 局部维数失配门}
+      - {id: D1-I09, name: 三角闭合关系门}
+      - {id: D1-I10, name: 反事实编辑本质映射}
+      - {id: D3-I07, name: 超边出生—死亡记忆库}
+      - {id: D7-I01, name: 样本×视图软洁净矩阵}
+      - {id: D7-I02, name: 跨空间陪审团清洗}
+      - {id: D7-I03, name: 时间反转记忆清洗}
+      - {id: D7-I04, name: 反事实影响清洗}
+      - {id: D7-I05, name: 洁净性共形控制器}
+      - {id: D7-I07, name: 拓扑相位一致清洗}
+      - {id: D7-I08, name: 双记忆库洁净交换}
+      - {id: D7-I09, name: 最小描述长度清洗}
+      - {id: D8-I04, name: 双 Beta 关系后验}
+      - {id: D8-I08, name: 对偶 OT 配对监督}
+      - {id: D8-I09, name: 四值逻辑正样本}
+
+  M5:
+    name: positive_builder
+    description: 根据增强视图和关系路由结果构造用于吸引的正样本表示。
+    input: [graph_representation, relation_routing]
+    output: positive_representation
+    default: balancegcl_three_partition_positive_builder
+    default_implementation: src.models.balancegcl_modules.BalanceGCLPositiveBuilder
+    default_config:
+      positive_gain: 0.1
+      negative_suppression: 0.1
+      neutral_noise: 0.05
+    selected: "none"
+    selected_parameters: {}
+    allowed_ideas:
+      - {id: D3-I02, name: 尺度间 Gromov-Wasserstein 输运}
+      - {id: D6-I01, name: 增强集合 Wasserstein 重心正样本}
+      - {id: D6-I02, name: 流形 Fréchet 综合正样本}
+      - {id: D6-I03, name: DPP 子集—Set Transformer 正样本}
+      - {id: D6-I04, name: 扩散去噪正样本}
+      - {id: D6-I05, name: 鲁棒几何中位数正样本}
+      - {id: D6-I06, name: 正样本超图池化}
+      - {id: D6-I07, name: Barycentric capsule 正样本}
+      - {id: D6-I08, name: 最小充分综合正样本}
+      - {id: D6-I09, name: 多视图意见交集正样本}
+      - {id: D6-I10, name: 增强轨迹样条正样本}
+      - {id: D8-I03, name: 因果交换正样本}
+      - {id: D8-I05, name: 正样本生成器—鉴别器互惠}
+      - {id: D8-I07, name: 可靠正样本课程反哺}
+
+  M6:
+    name: hard_negative_builder
+    description: 构造进入对比学习分母的结构或语义困难负样本。
+    input: [graph_representation, relation_routing]
+    output: hard_negative_representations
+    default: balancegcl_counterfactual_hard_negative_builder
+    default_implementation: src.models.balancegcl_modules.BalanceGCLNegativeBuilder
+    default_config:
+      prototype_interpolation: 0.2
+    selected: "none"
+    selected_parameters: {}
+    allowed_ideas:
+      - {id: D3-I05, name: 超边尺度小波包}
+      - {id: D3-I09, name: 尺度反事实一致性}
+      - {id: D8-I02, name: 双证据路径同伦配对}
+
+  M7:
+    name: projection_and_metric
+    description: 将图表示映射到对比空间，并定义内在几何或压缩方式。
+    input: graph_representation
+    output: projected_representation
+    default: balancegcl_two_layer_projection_head
+    default_implementation: src.models.balancegcl_modules.BalanceGCLProjectionHead
+    default_config:
+      architecture: linear_relu_linear
+      normalization: l2_after_projection
+    selected: "none"
+    selected_parameters: {}
+    allowed_ideas:
+      - {id: D10-I01, name: 图条件 carré-du-champ 度量}
+      - {id: D10-I02, name: 曲率跃迁链复形压缩}
+      - {id: D10-I03, name: 扩散坐标后再对比}
+      - {id: D10-I04, name: 先拓扑分层、后流形降维}
+      - {id: D10-I05, name: 高维表示的 Hodge 去噪}
+      - {id: D10-I06, name: 半松弛 GW 监督投影头}
+      - {id: D10-I07, name: 热测地—分类测地双度量}
+      - {id: D10-I08, name: 可逆压缩后对比}
+      - {id: D10-I09, name: 散射—可学习残差分解}
+      - {id: D10-I10, name: 持久路径坐标压缩}
+
+  M8:
+    name: contrastive_objective
+    description: 汇总正样本、Batch 负样本、困难负样本和跨层约束并输出训练损失。
+    input: [projected_anchor, projected_positive, projected_negatives]
+    output: scalar_loss
+    default: balancegcl_balanced_contrastive_objective
+    default_implementation: src.models.balancegcl_modules.BalanceGCLContrastiveObjective
+    default_config:
+      temperature: 0.2
+      batch_negatives: true
+      counterfactual_hard_negatives: true
+    selected: "none"
+    selected_parameters: {}
+    allowed_ideas:
+      - {id: D3-I03, name: 尺度导数对比}
+      - {id: D8-I01, name: 双向可信关系蒸馏}
+      - {id: D8-I10, name: 真假正样本梯度投影}
+      - {id: D9-I01, name: 链复形对比守恒}
+      - {id: D9-I02, name: 跨层 OT 循环}
+      - {id: D9-I03, name: 信息预算分解}
+      - {id: D9-I04, name: 边作为点—图翻译器}
+      - {id: D9-I05, name: 梯度流一致跨层对比}
+      - {id: D9-I06, name: 跨层可靠性路由}
+      - {id: D9-I07, name: 跨层反事实交换}
+      - {id: D9-I08, name: 多层原型单纯形}
+      - {id: D9-I09, name: 多分辨率互预测编码}
+      - {id: D9-I10, name: 跨层 Koopman 交换}
+
+connections:
+  - {from: M1, to: M2, payload: augmented_graph_pair}
+  - {from: M2, to: M3, payload: structure_encoding}
+  - {from: M3, to: M4, payload: graph_representation}
+  - {from: M3, to: M5, payload: graph_representation}
+  - {from: M3, to: M6, payload: graph_representation}
+  - {from: M4, to: M5, payload: relation_routing}
+  - {from: M4, to: M6, payload: relation_routing}
+  - {from: M3, to: M7, payload: anchor_representation}
+  - {from: M5, to: M7, payload: positive_representation}
+  - {from: M6, to: M7, payload: hard_negative_representations}
+  - {from: M7, to: M8, payload: projected_contrastive_batch}
+
+example_combinations:
+  baseline:
+    description: 八个位置全部使用原始 BalanceGCL 默认模块。
+    selections: {}
+  structure_fusion_positive:
+    description: 高阶环编码、组合课程融合、扩散正样本三个不同模块串联。
+    selections:
+      M2: D2-I05
+      M3: D4-I10
+      M5: D6-I04
+  augmentation_metric_objective:
+    description: 掩码增强、内在投影和跨层对比三个不同模块串联。
+    selections:
+      M1: D11-I05
+      M7: D10-I06
+      M8: D9-I01

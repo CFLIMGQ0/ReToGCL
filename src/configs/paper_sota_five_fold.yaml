@@ -1,0 +1,51 @@
+# 十篇新增论文模型的统一五折实验配置。
+methods:
+  - maxcutpool
+  - simplicial_mp
+  - del
+  - cellclat
+  - plstm
+  - abstaingnn
+  - edgeprompt
+  - dualprism
+  - invgnn
+  - genvsexp
+
+datasets:
+  - NCI1
+  - PROTEINS
+  - COLLAB
+  - MUTAG
+  - COLORS-3
+
+model:
+  hidden_dim: 64
+  layers: 4
+
+training:
+  seed: 42
+  folds: 5
+  batch_size: 64
+  patience: 10
+  epochs:
+    maxcutpool: 40
+    simplicial_mp: 40
+    del: 40
+    cellclat: 40
+    plstm: 40
+    abstaingnn: 50
+    edgeprompt: 40
+    dualprism: 40
+    invgnn: 40
+    genvsexp: 40
+
+evaluation:
+  metrics:
+    - accuracy
+    - nmi
+    - ari
+    - macro_f1
+  probe_epochs: 200
+
+output:
+  output_dir: outputs/paper_sota

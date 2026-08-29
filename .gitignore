@@ -1,0 +1,66 @@
+# 数据集与预训练权重
+datasets/
+pre_weights/
+
+# 大规模实验产物；论文与顶层汇总文档单独保留
+outputs/
+IDEA_PAIRWISE/
+IDEA_PAIRWISE_MODULAR/
+IDEA_PAIRWISE_SMOKE/
+IDEA_PARA/
+IDEA_PARA_GLOBAL/
+IDEA_PARA_MODULAR/
+IDEA_TRIPLE_MODULAR_TOP5/
+IDEA_TRIPLE_MODULAR_TOP5_SMOKE/
+
+# 外部论文与第三方源码镜像不重复发布
+Sheaf超图.pdf
+src/references/
+src/sota_sources/
+src/sota_sources_2025_2026/
+
+# 模型、缓存和运行日志
+**/checkpoints/
+**/launcher_logs/
+**/preprocess_cache/
+**/smoke_cache/
+**/cache/
+*.pt
+*.pth
+*.ckpt
+*.pkl
+*.pickle
+*.npy
+*.npz
+*.nii
+*.nii.gz
+*.archive
+
+# Python、测试与编辑器缓存
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+.idea/
+.vscode/
+
+# LaTeX 中间文件；保留 paper_retogcl/paper.pdf
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# 系统临时文件
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp

@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "description": "论文主模型在 ClinTox、BACE、BBBP 上的统一五折任务清单",
+    "idea_parameter_source": "IDEA_PARA_MODULAR/DEFAULT_PARAMETERS.json",
+    "clintox_protocol": "joint_FDA_APPROVED_CT_TOX_multiclass",
+    "folds": 5,
+    "seed": 42
+  },
+  "tasks": [
+    {
+      "task_id": "D7-I10__D7-I01__D10-I04__ClinTox",
+      "triple_id": "D7-I10__D7-I01__D10-I04",
+      "idea_ids": ["D7-I10", "D7-I01", "D10-I04"],
+      "modules": ["M1", "M4", "M7"],
+      "idea_parameters": [
+        {
+          "adversarial_augmentation_budget": 0.1,
+          "minimum_clean_ratio": 0.6,
+          "bilevel_update_interval": 2.0
+        },
+        {
+          "cleanliness_beta_prior_strength": 0.5,
+          "clean_probability_floor": 0.05,
+          "topology_evidence_ratio": 0.5
+        },
+        {
+          "strata_count": 16.0,
+          "bridge_weight": 0.5,
+          "tangent_dimension": 32.0
+        }
+      ],
+      "source_top_pairs": ["D7-I10__D10-I04"],
+      "dataset": "ClinTox"
+    },
+    {
+      "task_id": "D7-I10__D7-I01__D10-I04__BACE",
+      "triple_id": "D7-I10__D7-I01__D10-I04",
+      "idea_ids": ["D7-I10", "D7-I01", "D10-I04"],
+      "modules": ["M1", "M4", "M7"],
+      "idea_parameters": [
+        {
+          "adversarial_augmentation_budget": 0.1,
+          "minimum_clean_ratio": 0.6,
+          "bilevel_update_interval": 2.0
+        },
+        {
+          "cleanliness_beta_prior_strength": 0.5,
+          "clean_probability_floor": 0.05,
+          "topology_evidence_ratio": 0.5
+        },
+        {
+          "strata_count": 16.0,
+          "bridge_weight": 0.5,
+          "tangent_dimension": 32.0
+        }
+      ],
+      "source_top_pairs": ["D7-I10__D10-I04"],
+      "dataset": "BACE"
+    },
+    {
+      "task_id": "D7-I10__D7-I01__D10-I04__BBBP",
+      "triple_id": "D7-I10__D7-I01__D10-I04",
+      "idea_ids": ["D7-I10", "D7-I01", "D10-I04"],
+      "modules": ["M1", "M4", "M7"],
+      "idea_parameters": [
+        {
+          "adversarial_augmentation_budget": 0.1,
+          "minimum_clean_ratio": 0.6,
+          "bilevel_update_interval": 2.0
+        },
+        {
+          "cleanliness_beta_prior_strength": 0.5,
+          "clean_probability_floor": 0.05,
+          "topology_evidence_ratio": 0.5
+        },
+        {
+          "strata_count": 16.0,
+          "bridge_weight": 0.5,
+          "tangent_dimension": 32.0
+        }
+      ],
+      "source_top_pairs": ["D7-I10__D10-I04"],
+      "dataset": "BBBP"
+    }
+  ]
+}

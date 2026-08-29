@@ -1,0 +1,25 @@
+# 通用训练配置模板；具体参数应根据任务补充或调整。
+data:
+  data_root: datasets/main_data
+  train_split: train
+  val_split: val
+  test_split: test
+
+model:
+  name: default
+  pretrained_path: null
+
+training:
+  seed: 42
+  batch_size: 32
+  epochs: 100
+  learning_rate: 0.001
+  num_workers: 4
+
+optimizer:
+  name: adamw
+  weight_decay: 0.0001
+
+output:
+  output_dir: outputs
+  save_best_only: true

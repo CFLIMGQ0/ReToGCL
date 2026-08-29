@@ -1,0 +1,69 @@
+# 多空间门控相似度（MSGS）的诊断与五折消融配置。
+
+backbone:
+  name: graphcl_gin
+  hidden_dim: 32
+  layers: 3
+  checkpoint_dir: outputs/baselines/checkpoints
+
+spaces:
+  semantic:
+    metric: cosine
+  topology:
+    metric: train_fold_standardized_rbf
+    degree_histogram_bins: 16
+  distribution:
+    metric: node_prototype_histogram
+    prototypes: 16
+    assignment_temperature: 0.2
+
+gate:
+  hidden_dim: 32
+  boundary_signal: normalized_prediction_entropy
+  warmup_epochs: 5
+  balance_weight: 0.01
+
+retrieval:
+  bank: outer_fold_training_graphs_only
+  neighbors: 10
+  uncertainty_weight: 0.5
+
+training:
+  seed: 42
+  folds: 5
+  batch_size: 64
+  epochs: 40
+  patience: 10
+  learning_rate: 0.001
+  encoder_learning_rate: 0.0001
+  weight_decay: 0.0001
+  similarity_weight: 0.5
+  relation_weight: 0.2
+  hard_fraction: 0.25
+  negative_margin: 0.5
+
+ablation:
+  variants:
+    - baseline
+    - semantic
+    - topology
+    - distribution
+    - uniform
+    - global
+    - gate
+    - boundary_gate
+    - full
+  pilot_datasets:
+    - MUTAG
+    - PROTEINS
+  full_datasets:
+    - NCI1
+    - PROTEINS
+    - COLLAB
+    - MUTAG
+    - COLORS-3
+
+output:
+  diagnostics: outputs/multispace/diagnostics.json
+  experiments: outputs/multispace
+  retrieval_experiments: outputs/multispace_retrieval

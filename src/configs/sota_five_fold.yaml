@@ -1,0 +1,39 @@
+# 五个新增 SOTA 在共同图分类数据集上的统一五折配置。
+methods:
+  - histograph
+  - uniimb
+  - difflift
+  - balancegcl
+  - khangcl
+
+datasets:
+  - NCI1
+  - PROTEINS
+  - COLLAB
+  - MUTAG
+  - COLORS-3
+
+model:
+  hidden_dim: 32
+  layers: 3
+  topology_dim: 4
+
+training:
+  seed: 42
+  folds: 5
+  batch_size: 128
+  epochs: 40
+  early_stopping_patience: 10
+  probe_epochs: 200
+
+evaluation:
+  metric: accuracy_percent
+  supervised_protocol: stratified_5_fold_with_inner_validation
+  contrastive_protocol: stratified_5_fold_linear_probe
+
+hardware:
+  requested_gpu_devices: [0, 1, 2, 3]
+  detected_gpu_devices: [0, 1]
+
+output:
+  output_dir: outputs/sota

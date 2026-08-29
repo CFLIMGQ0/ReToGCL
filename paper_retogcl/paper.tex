@@ -1,0 +1,650 @@
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[a4paper,margin=1.65cm,columnsep=0.65cm]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,multirow,longtable,array,tabularx}
+\usepackage{graphicx}
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,backgrounds}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle={ReToGCL: Reliability-Weighted Topology-Conditioned Graph Contrastive Learning for Medical Graph Classification},
+  pdfauthor={Anonymous Authors},
+  pdfsubject={Graph contrastive learning for medical graph classification},
+  pdfkeywords={graph neural networks, graph contrastive learning, medical graphs, reliability, topology}
+}
+
+\definecolor{viewblue}{HTML}{DCEAF7}
+\definecolor{viewgreen}{HTML}{DFF2E1}
+\definecolor{reliabilityorange}{HTML}{FCE7C7}
+\definecolor{topologypurple}{HTML}{E8DFF5}
+\definecolor{contrastred}{HTML}{F7D9D9}
+\definecolor{probegray}{HTML}{E8ECEF}
+\definecolor{darkblue}{HTML}{1F4E79}
+\definecolor{darkgreen}{HTML}{2D6A4F}
+
+\newcommand{\method}{\textsc{ReToGCL}}
+\newcommand{\citeneeded}{\textbf{[CITATION NEEDED]}}
+\newcommand{\res}[2]{#1\,$\pm$\,#2}
+\newcommand{\notrun}{\textit{Not run}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\title{\textbf{ReToGCL: Reliability-Weighted Topology-Conditioned Graph Contrastive Learning for Medical Graph Classification}}
+\author{Anonymous Authors\\Anonymous Institution\\\texttt{anonymous@invalid.example}}
+\date{Draft manuscript}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Medical graph classification must learn from heterogeneous graphs whose node attributes and local structures are not equally trustworthy. Standard graph contrastive learning typically treats two stochastic augmentations as equally valid positives and projects every graph into a single unconstrained geometry. These assumptions are fragile for brain-image patch graphs and molecular graphs: attribute corruption can erase clinically relevant signals, subgraph sampling can destabilize local motifs, and class imbalance can make high accuracy coexist with poor minority-class structure. We introduce \method{}, an end-to-end graph contrastive model that combines three ideas: reliable complementary augmentation, sample--view reliability learning, and topology-conditioned projection. An attribute-masked view and a structure-preserving sampled-subgraph view are encoded by a shared three-layer Graph Isomorphism Network. Node-, edge-, local-closure-, graph-, and depth-scale representations provide agreement, stability, and diversity evidence. Continuous reliability weights fuse rather than discard uncertain observations. A topology-conditioned bottleneck then organizes the fused representation before balanced contrastive learning with in-batch and hard negatives. After 40 self-supervised epochs, frozen representations are evaluated by a 200-epoch linear probe under stratified five-fold cross-validation. Across ADHD-200, BZR, COX2, AIDS, and the 12-task Tox21 benchmark, \method{} obtains accuracies of 66.26, 83.93, 82.01, 99.40, and 92.71\%, respectively. Its NMI/ARI/Macro-F1 are 5.88/9.90/62.86 on ADHD-200, 24.22/37.03/73.10 on BZR, 16.67/29.99/70.08 on COX2, 93.69/97.24/99.05 on AIDS, and 11.44/20.79/60.70 on Tox21. Under one unified project implementation, it strictly exceeds all four five-fold means of 34/35, 34/35, 33/35, 30/35, and 28/35 comparators, respectively. These are descriptive mean comparisons, not claims of statistical significance.
+\end{abstract}
+
+\section{Introduction}
+
+Graphs provide a common language for biomedical systems. A brain image can be represented as a spatial graph of anatomical patches, while a molecule can be represented as atoms connected by chemical bonds. The resulting graph-classification problems nevertheless differ sharply in graph size, feature semantics, class balance, and label completeness. ADHD-200 contains relatively large, fixed-lattice brain graphs; BZR and COX2 contain small and imbalanced molecular datasets; AIDS contains a pronounced class skew; and Tox21 combines twelve partially observed toxicity endpoints. A representation learner intended for this setting must therefore be robust to both perturbation noise and heterogeneous topology.
+
+Graph contrastive learning (GCL) is attractive because it can pretrain an encoder without diagnostic or activity labels \citeneeded. Most GCL pipelines maximize agreement between two augmented instances of the same graph and use other graphs as negatives. The critical but often implicit assumption is that both augmentations preserve task-relevant information. In medical graphs, that assumption is unreliable. Attribute masking may suppress a localized imaging or chemical signal; subgraph sampling may remove an important motif; and the same corruption strength may be benign for one graph but destructive for another. Uniformly weighting the two views transfers these errors into the contrastive target.
+
+A second difficulty arises after encoding. Ordinary projection heads map all samples into one contrastive geometry. This can place same-class graphs far apart, move boundary samples toward a different class, or obscure a real within-class manifold with high-dimensional noise. These effects are especially consequential under imbalance: accuracy can remain high when a model predominantly predicts the majority class, while Macro-F1, normalized mutual information (NMI), and adjusted Rand index (ARI) expose weak class-balanced separation.
+
+We address these issues with \method{}, a reliability-weighted and topology-conditioned GCL framework. The model constructs complementary attribute-masked and sampled-subgraph views, encodes both using a shared three-layer GIN, and collects evidence at node, edge, local-closure, global-graph, and depth scales. It assigns a continuous reliability distribution to every sample--view pair. Thus, difficult graphs remain in training, but unreliable evidence contributes less. The reliability-fused representation conditions semantic routing and is subsequently organized through a topology-conditioned bottleneck whose structural agreement is regularized. Balanced contrastive learning combines in-batch negatives with representation-dependent hard negatives. The entire pretraining system is optimized jointly, after which a linear classifier evaluates the frozen graph representation.
+
+Our contributions are threefold:
+
+\begin{itemize}[leftmargin=*,nosep]
+    \item We formulate reliable complementary augmentation for medical graphs, coupling attribute masking and structure-preserving subgraph sampling without assuming that every perturbed view is equally faithful.
+    \item We introduce sample-specific multi-view reliability learning from agreement, cross-augmentation stability, and representation diversity, retaining hard samples through continuous weighting rather than binary rejection.
+    \item We combine the reliability mechanism with topology-conditioned projection and balanced contrastive learning in one end-to-end model. Under a unified PyG adaptation, data pipeline, and five-fold protocol, the combination improves medical graph representations across five heterogeneous benchmarks, as jointly assessed by Accuracy, NMI, ARI, and Macro-F1.
+\end{itemize}
+
+The empirical statements in this manuscript are deliberately bounded. ``Exceeds'' means that a reported five-fold mean is strictly larger. It does not imply statistical significance, and no significance test is claimed.
+
+\section{Related Work}
+
+\subsection{Graph representation learning in biomedicine}
+
+Message-passing graph neural networks aggregate neighborhood information to form node and graph representations \citeneeded. The Graph Isomorphism Network (GIN) is a widely used expressive backbone for graph classification \citeneeded. Biomedical applications include molecular property prediction, drug activity classification, toxicity screening, and graph-based analysis of neuroimaging data \citeneeded. These applications often combine limited labels with substantial imbalance and structurally heterogeneous samples. Consequently, aggregate accuracy alone is insufficient; class-balanced and clustering-oriented measures are also needed.
+
+\subsection{Graph contrastive learning and augmentation}
+
+GCL learns augmentation-invariant representations by matching multiple views of the same graph \citeneeded. Common transformations include attribute masking, edge dropping, node dropping, and subgraph sampling. A fixed augmentation policy can be brittle because invariance is task- and sample-dependent. Adaptive augmentation methods learn global or instance-dependent perturbations \citeneeded, but many still treat the generated views as equally reliable after they have been produced. \method{} instead evaluates evidence at multiple graph granularities and assigns continuous reliability to each sample--view observation.
+
+\subsection{Reliability, imbalance, and hard negatives}
+
+Noisy views and false negatives can bias a contrastive objective. Reliability estimation, uncertainty weighting, positive refinement, and hard-negative construction have therefore been investigated in self-supervised learning \citeneeded. Class imbalance adds a related failure mode: an embedding can support majority-class accuracy while failing to separate minority examples. BalanceGCL is the direct foundation used in this project and is therefore included explicitly in the main comparison \citeneeded. Our extension preserves balanced positive/negative construction while adding reliable augmentation, multi-view reliability learning, and topology-conditioned projection.
+
+\subsection{Topology-aware graph learning}
+
+Graph topology has been incorporated through motif statistics, higher-order structures, pooling, kernels, topological descriptors, and geometry-aware projection \citeneeded. Local closure patterns are particularly useful because they distinguish tree-like neighborhoods from locally redundant or cyclic structures. However, forcing distinct topological regimes into one projection may distort neighborhood relations. \method{} uses local-closure and depth-scale evidence to condition the projection and explicitly discourages structural distortion.
+
+The comparison pool contains BalanceGCL, HistoGraph, UniImb, DiffLift, MaxCutPool, CellCLAT, DualPrism, KAGNN, MultiNet, HSPGKN, DGDA, RSNN, TopoFormer, and 22 additional methods. Their bibliographic metadata must be verified before submission; all unverified citations are intentionally marked \citeneeded. Importantly, the numerical values reported below are \emph{not} copied from the corresponding papers. They are results of method-specific PyG adaptations run in the same project data pipeline and five-fold evaluation framework.
+
+\section{Problem Definition}
+
+Let a biomedical graph be $G_i=(V_i,E_i,X_i)$, where $V_i$ is the node set, $E_i\subseteq V_i\times V_i$ is the undirected edge set, and $X_i\in\R^{|V_i|\times d_x}$ is the node-feature matrix. A dataset is $\mathcal D=\{(G_i,y_i)\}_{i=1}^{N}$, with a graph label $y_i\in\{1,\ldots,C\}$. During self-supervised pretraining, labels are not used. The learner estimates an encoder $f_\theta$ such that a linear classifier trained on frozen $f_\theta(G)$ separates the downstream classes.
+
+For Tox21, $y_{it}\in\{0,1,\varnothing\}$ denotes the label for endpoint $t\in\{1,\ldots,12\}$. A missing value $\varnothing$ is excluded only from the corresponding endpoint. Each endpoint is split independently with stratification; its four metrics are computed separately, and the final Tox21 result is the unweighted macro-average over endpoints.
+
+The representation problem is to learn a map
+\begin{equation}
+f_\theta:\mathcal G\rightarrow\R^{d_g}
+\end{equation}
+that is invariant to semantics-preserving perturbations, sensitive to class-relevant structure, robust to unreliable views, and linearly useful after pretraining. No downstream label enters augmentation, reliability estimation, or contrastive pretraining.
+
+\section{Method}
+
+\subsection{Overview}
+
+Figure~\ref{fig:framework} summarizes \method{}. For each input graph, two complementary perturbations are generated. A shared GIN encodes both views and exposes its layer history. Multi-granularity readouts produce node, edge, local-closure, and graph summaries as well as depth-scale summaries. Cross-view evidence yields a continuous reliability distribution. The fused representation conditions the downstream semantic organization, and a topology-conditioned bottleneck maps it to contrastive space. In-batch and hard negatives enter a balanced objective. All differentiable components are optimized jointly.
+
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    font=\sffamily\scriptsize,
+    >=Latex,
+    stage/.style={draw=black!55, rounded corners=2pt, minimum height=1.08cm, align=center, inner sep=4pt},
+    flow/.style={->, line width=0.75pt, draw=black!75},
+    aux/.style={->, dashed, line width=0.65pt, draw=black!55},
+    note/.style={font=\sffamily\tiny, align=center}
+]
+\node[stage, fill=probegray, minimum width=1.55cm] (input) {Input graph\\$G=(V,E,X)$};
+\node[stage, fill=viewblue, right=0.55cm of input, minimum width=2.15cm] (aug) {Complementary augmentation\\attribute mask $\mathcal A_x$\\subgraph sample $\mathcal A_s$};
+\node[stage, fill=viewgreen, right=0.55cm of aug, minimum width=1.90cm] (gin) {Shared 3-layer GIN\\BN $+$ ReLU\\layer history};
+\node[stage, fill=viewgreen!75!white, right=0.55cm of gin, minimum width=2.25cm] (multi) {Multi-granularity readout\\node $\mid$ edge $\mid$ closure $\mid$ graph\\three depth scales};
+\node[stage, fill=reliabilityorange, right=0.55cm of multi, minimum width=2.25cm] (rel) {Reliability learning\\agreement, stability, diversity\\$z_i=\sum_j w_{ij}v_{ij}$};
+\node[stage, fill=topologypurple, right=0.55cm of rel, minimum width=2.25cm] (topo) {Topology-conditioned projection\\local closure $+$ scales\\structured bottleneck};
+\node[stage, fill=contrastred, right=0.55cm of topo, minimum width=2.05cm] (cl) {Balanced contrastive loss\\positive pair\\batch $+$ hard negatives};
+\node[stage, fill=probegray, right=0.55cm of cl, minimum width=1.75cm] (probe) {Frozen encoder\\Linear probe\\5-fold metrics};
+
+\draw[flow] (input) -- (aug);
+\draw[flow] (aug) -- node[above,note] {$G_i^{(x)},G_i^{(s)}$} (gin);
+\draw[flow] (gin) -- (multi);
+\draw[flow] (multi) -- (rel);
+\draw[flow] (rel) -- (topo);
+\draw[flow] (topo) -- (cl);
+\draw[flow] (cl) -- (probe);
+
+\node[below=0.52cm of rel, draw=orange!65!black, rounded corners=2pt, fill=reliabilityorange!55, note, minimum width=2.1cm] (rreg) {reliability reward $\mathcal L_{\rm rel}$};
+\node[below=0.52cm of topo, draw=purple!65!black, rounded corners=2pt, fill=topologypurple!55, note, minimum width=2.1cm] (treg) {structure score $\mathcal L_{\rm topo}$};
+\draw[aux] (rreg) -- (cl);
+\draw[aux] (treg) -- (cl);
+\end{tikzpicture}
+}
+\caption{End-to-end \method{} framework. The two augmented graphs share every encoder parameter. Continuous reliability weighting retains uncertain samples, while topology-conditioned projection organizes the representation before balanced contrastive learning. The linear probe is trained only after self-supervised pretraining.}
+\label{fig:framework}
+\end{figure*}
+
+\subsection{Reliable complementary augmentation}
+
+For each $G_i$, we generate
+\begin{equation}
+G_i^{(x)}=\mathcal A_x(G_i;p_x),\qquad
+G_i^{(s)}=\mathcal A_s(G_i;p_s),
+\end{equation}
+where $\mathcal A_x$ sets selected node-feature vectors to zero and $\mathcal A_s$ retains a density-favored sampled subset while masking removed nodes and incident edges. Both transformations preserve graph identity and enough original content to form a positive pair. Their complementarity is deliberate: the first probes attribute robustness while retaining topology; the second probes structural robustness while retaining the features of selected nodes. In the evaluated configuration, the augmentation budget is 0.10 and the minimum retained-content ratio is 0.60. These values are fixed across the reported runs.
+
+We use the word \emph{reliable} to describe the complete mechanism, not to assert that every generated view is clean. The generator exposes possibly noisy attributes and unstable substructures, after which the reliability module estimates how much each observation should influence training.
+
+\subsection{Shared GIN encoder and multi-layer fusion}
+
+Both views are processed by one parameter-shared three-layer GIN. With $h_v^{(0)}=x_v$, layer $\ell$ computes
+\begin{equation}
+\label{eq:gin}
+\begin{aligned}
+h_v^{(\ell)}=\operatorname{ReLU}\!\Bigg(
+\operatorname{BN}\!\Bigg[\operatorname{MLP}_{\ell}\!\Bigg(&
+(1+\epsilon_{\ell})h_v^{(\ell-1)}\\[-2pt]
+&+\sum_{u\in\mathcal N(v)}h_u^{(\ell-1)}\Bigg)\Bigg]\Bigg).
+\end{aligned}
+\end{equation}
+The hidden dimension is 32. We retain $H^{(0)},\ldots,H^{(3)}$ and concatenate sum-pooled layer summaries,
+\begin{equation}
+g_i=\mathop{\Vert}_{\ell=0}^{3}\operatorname{Pool}\!\left(H_i^{(\ell)}\right),
+\end{equation}
+which prevents the deepest layer from being the sole source of graph information.
+
+\subsection{Multi-granularity evidence}
+
+Let $\bar h_v$ denote the concatenated node history. Four graph-level views are constructed:
+\begin{align}
+n_i &= \operatorname{MeanPool}\{\bar h_v:v\in V_i\},\\
+e_i &= \operatorname{MeanPool}\{(\bar h_u+\bar h_v)/2:(u,v)\in E_i\},\\
+c_i &= \operatorname{MeanPool}\left\{
+\frac{|\bar h_v-\mu_{\mathcal N(v)}|}{\sqrt{\deg(v)}}:v\in V_i\right\},\\
+g_i &= \operatorname{SumPool}\{\bar h_v:v\in V_i\}.
+\end{align}
+Here $c_i$ is a differentiable local-closure residual: low residual indicates locally redundant or smoothly closed neighborhoods, whereas high residual exposes unstable or boundary-like structure. Each summary is linearly transformed and $\ell_2$-normalized. In addition, the first, middle, and last GIN states are independently pooled as three depth-scale summaries. Thus, topology and semantics are represented at both granularity and depth axes.
+
+\subsection{Sample--view reliability learning}
+
+For granularity $j\in\{n,e,c,g\}$ and the two augmentations $a\in\{x,s\}$, let $v_{ij}^{(a)}$ be the normalized representation. We calculate
+\begin{align}
+A_{ij}&=\cos\!\left(v_{ij}^{(x)},v_{ij}^{(s)}\right),\\
+S_{ij}&=\exp\!\left[-d_v^{-1}\norm{v_{ij}^{(x)}-v_{ij}^{(s)}}_2^2\right],\\
+D_{ij}&=\sqrt{\operatorname{Var}_{k}\left(v_{ij,k}^{(x)}\right)+\varepsilon}.
+\end{align}
+$A$ measures directional agreement, $S$ measures perturbation stability, and $D$ prevents reliability from collapsing onto an uninformative constant representation. An evidence network produces
+\begin{equation}
+q_{ij}=\rho_\omega([A_{ij},S_{ij},D_{ij}]),\qquad
+w_{ij}=\frac{\exp(q_{ij})}{\sum_{r}\exp(q_{ir})}.
+\end{equation}
+The reliability-conditioned representations are
+\begin{equation}
+\label{eq:fusion}
+z_i^{(a)}=\sum_jw_{ij}v_{ij}^{(a)}.
+\end{equation}
+The reliability floor is 0.05 and topology contributes one half of the evidence mixture in the evaluated configuration. Because $w_{ij}$ is continuous and normalized, no sample is removed. The fused representation conditions semantic routing, positive refinement, and hard-negative construction downstream.
+
+We maximize a reliability reward
+\begin{equation}
+\label{eq:relreward}
+\mathcal L_{\mathrm{rel}}=
+\frac{1}{B}\sum_{i=1}^{B}\sum_j w_{ij}A_{ij}
++\eta H\!\left(\frac{1}{B}\sum_iw_i\right),
+\end{equation}
+where the entropy term discourages batch-level collapse onto one granularity. This term is a reward (larger is better), which explains its negative sign in the minimized total objective below.
+
+\subsection{Topology-conditioned representation projection}
+
+Let $t_i$ concatenate the closure view $c_i$ and the three depth-scale summaries. A topology router assigns the graph to a soft mixture of $K$ structural strata,
+\begin{equation}
+\pi_i=\operatorname{softmax}(R_\psi(t_i)),\qquad
+u_i=\sum_{k=1}^{K}\pi_{ik}P_k(z_i),
+\end{equation}
+where $P_k$ shares a common bottleneck but permits stratum-dependent modulation. The evaluated configuration uses $K=16$, a bridge weight of 0.5, and a 32-dimensional intermediate bottleneck. A learnable projection head maps $u_i$ to the normalized contrastive representation $p_i$.
+
+To preserve topology during organization, define pairwise cosine-distance matrices $\Delta^{\mathrm{topo}}$ from $t$ and $\Delta^{\mathrm{proj}}$ from $p$. We use the topology-preservation score
+\begin{equation}
+\label{eq:toporeward}
+\mathcal L_{\mathrm{topo}}=-\frac{1}{B^2}
+\norm{\Delta^{\mathrm{proj}}-\operatorname{sg}(\Delta^{\mathrm{topo}})}_F^2,
+\end{equation}
+where $\operatorname{sg}$ stops gradients through the evidence target. Since the score is the negative distortion, maximizing it preserves pairwise structure. Conditioning before projection is intended to avoid forcing distinct topology types into an undifferentiated geometry and to reduce the effect of high-dimensional noise on local class structure.
+
+\subsection{Balanced graph contrastive learning}
+
+For graph $i$, the two reliable augmented representations form a positive pair. Other graphs in the minibatch provide negatives, and semantic alternatives generated from non-selected routing prototypes provide hard negatives $h_{ik}^-$. With cosine similarity $s(\cdot,\cdot)$ and temperature $\tau$, one direction of the loss is
+\begin{equation}
+\begin{aligned}
+\ell_i^{x\rightarrow s}
+&=-\log\frac{\exp(s(p_i^{(x)},p_i^{(s)})/\tau)}{Z_i},\\
+Z_i&=\sum_{r=1}^{B}\exp(s(p_i^{(x)},p_r^{(s)})/\tau)\\[-2pt]
+&\quad+\sum_k\exp(s(p_i^{(x)},h_{ik}^-)/\tau).
+\end{aligned}
+\end{equation}
+The contrastive term averages both directions:
+\begin{equation}
+\mathcal L_{\mathrm{con}}=\frac{1}{2B}\sum_i
+(\ell_i^{x\rightarrow s}+\ell_i^{s\rightarrow x}).
+\end{equation}
+The total minimized objective is
+\begin{equation}
+\label{eq:total}
+\boxed{\mathcal L=
+\mathcal L_{\mathrm{con}}
+-\lambda_{\mathrm{clean}}\mathcal L_{\mathrm{rel}}
+-\lambda_{\mathrm{topo}}\mathcal L_{\mathrm{topo}}.}
+\end{equation}
+Both auxiliary quantities in Eq.~\eqref{eq:total} are written as rewards. Therefore, the sign convention is equivalent to adding non-negative reliability and topology-distortion penalties. The evaluated implementation uses an auxiliary coefficient of 0.25 per mechanism.
+
+\subsection{Overall formulation and optimization}
+
+Combining Eqs.~\eqref{eq:gin}--\eqref{eq:total}, the end-to-end map is
+\begin{equation}
+\begin{aligned}
+G_i &\xrightarrow{\mathcal A_x,\mathcal A_s}
+(G_i^{(x)},G_i^{(s)})
+\xrightarrow{f_\theta}
+\{v_{ij}^{(a)},t_i^{(a)}\}_{j,a}\\
+&\xrightarrow{\rho_\omega}
+\{z_i^{(a)}\}_{a}
+\xrightarrow{P_{\psi}(\cdot\mid t_i)}
+\{p_i^{(a)}\}_{a}
+\xrightarrow{\mathcal L}
+(\theta,\omega,\psi)^*.
+\end{aligned}
+\end{equation}
+The downstream probe is deliberately excluded from self-supervised optimization.
+
+\begin{algorithm}[t]
+\caption{End-to-end pretraining and linear-probe evaluation}
+\label{alg:training}
+\begin{algorithmic}[1]
+\Require Graph dataset $\mathcal D$; encoder $f_\theta$; reliability module $\rho_\omega$; topology-conditioned projector $P_\psi$
+\For{$e=1$ to $40$}
+    \For{minibatch $\mathcal B\subset\mathcal D$ of size $128$}
+        \ForAll{$G_i\in\mathcal B$}
+            \State $G_i^{(x)}\gets\mathcal A_x(G_i)$; $G_i^{(s)}\gets\mathcal A_s(G_i)$
+            \State Encode both views with the shared three-layer GIN
+            \State Read out node, edge, closure, graph, and depth-scale representations
+            \State Compute $(A_{ij},S_{ij},D_{ij})$, reliability weights $w_{ij}$, and fused $z_i^{(x)},z_i^{(s)}$
+            \State Compute topology evidence $t_i$ and projected $p_i^{(x)},p_i^{(s)}$
+        \EndFor
+        \State Build in-batch and routing-based hard negatives
+        \State Evaluate $\mathcal L_{\rm con}$, $\mathcal L_{\rm rel}$, and $\mathcal L_{\rm topo}$
+        \State Update $(\theta,\omega,\psi)$ with Adam on Eq.~\eqref{eq:total}
+    \EndFor
+\EndFor
+\State Freeze $f_{\theta^*}$ and extract graph representations
+\For{each stratified fold $k=1,\ldots,5$}
+    \State Train a linear classifier for 200 epochs on the fold-training representations
+    \State Evaluate Accuracy, NMI, ARI, and Macro-F1 on the held-out fold
+\EndFor
+\State Report the mean and standard deviation across five folds
+\end{algorithmic}
+\end{algorithm}
+
+\section{Experimental Setup}
+
+\subsection{Datasets}
+
+Table~\ref{tab:datasets} summarizes the five medical benchmarks. ADHD-200 is a binary structural-MRI graph-classification task. Each subject is represented by a fixed $6\times6\times6$ patch lattice with 216 nodes and 540 undirected edges. Node features contain patch intensity mean, standard deviation, nonzero ratio, and normalized three-dimensional coordinates. The 655 labeled subjects comprise 405 healthy controls and 250 participants with ADHD.
+
+BZR and COX2 are binary molecular-activity datasets. AIDS predicts antiviral activity. Tox21 contains twelve official binary toxicity endpoints. We do not impute missing Tox21 labels; a compound is excluded only for an endpoint whose label is missing. Dataset sources and canonical preprocessing descriptions require bibliographic completion \citeneeded.
+
+\begin{table*}[t]
+\centering
+\caption{Dataset statistics used in the unified project pipeline. Edge counts are undirected. Tox21 class distributions differ by endpoint and are therefore not summarized as one binary count.}
+\label{tab:datasets}
+\small
+\begin{tabular}{lrrrrrl}
+\toprule
+Dataset & Graphs & Class distribution & Avg. nodes & Avg. edges & Feature dim. & Task \\
+\midrule
+ADHD-200 & 655 & 405 / 250 & 216.00 & 540.00 & 6 & ADHD vs. healthy control \\
+BZR      & 405 & 319 / 86  & 35.75 & 38.36 & 53 & Benzodiazepine-receptor activity \\
+COX2     & 467 & 365 / 102 & 41.22 & 43.45 & 35 & COX-2 inhibitor activity \\
+AIDS     & 2,000 & 400 / 1,600 & 15.69 & 16.19 & 38 & HIV/AIDS antiviral activity \\
+Tox21    & 7,823 & endpoint-specific & 18.57 & 19.29 & 9 & 12 binary toxicity endpoints \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Protocol and implementation}
+
+Self-supervised pretraining lasts 40 epochs. The frozen graph encoder is evaluated by a 200-epoch linear probe. We use stratified five-fold cross-validation with random seed 42. The encoder has three GIN layers, hidden dimension 32, ReLU activations, batch normalization, and global pooling. The batch size is 128. Adam uses learning rate $10^{-3}$ and weight decay $10^{-5}$. Every result is reported as the five-fold mean and standard deviation in percentage points.
+
+The protocol is representation evaluation: self-supervised learning uses graph inputs without labels, and each linear probe accesses labels only in its training fold. For Tox21, the split and probe are constructed independently per endpoint, then the endpoint results are macro-averaged. Future work should additionally report a strictly inductive variant that pretrains separately inside each outer fold (Section~\ref{sec:limitations}).
+
+The compared methods share the same project-level PyG interface, processed datasets, split generation, seed, and metric implementation. Their method-appropriate training mechanisms are retained. Consequently, the values in Table~\ref{tab:mainfull} are controlled project reproductions, not numbers directly reported by the cited papers. The archived benchmark contains 35 comparators; the main table shows the 13 requested representative methods and the proposed model, while rank and dominance counts use all 35.
+
+\subsection{Metrics}
+
+Accuracy measures the fraction of correct predictions. Macro-F1 computes F1 independently per class and averages the class values, making it more sensitive to minority-class behavior. NMI measures the mutual dependence between predicted and true partitions after normalization. ARI corrects pairwise partition agreement for chance. For NMI and ARI, hard linear-probe predictions are treated as cluster assignments. Reporting all four prevents majority-class accuracy from being mistaken for uniformly good representation structure.
+
+\section{Main Results}
+
+\subsection{Comparison with unified PyG adaptations}
+
+Table~\ref{tab:mainfull} reports all supplied main-table methods. The proposed row is shaded; this shading denotes the proposed method, not significance. The full 35-method archive is used for ranks in Table~\ref{tab:ranks}.
+
+\onecolumn
+\footnotesize
+\renewcommand{\arraystretch}{0.80}
+\setlength{\tabcolsep}{3pt}
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+\begin{longtable}{@{}llrrrr@{}}
+\caption{Main results under the unified project adaptation and five-fold protocol (mean $\pm$ standard deviation, \%). Values are project reproductions rather than original-paper reports. ``Proposed'' shading identifies \method{}; it does not indicate statistical significance.}
+\label{tab:mainfull}\\
+\toprule
+Dataset & Method & Accuracy & NMI & ARI & Macro-F1 \\
+\midrule
+\endfirsthead
+\multicolumn{6}{c}{\tablename\ \thetable\ --- continued}\\
+\toprule
+Dataset & Method & Accuracy & NMI & ARI & Macro-F1 \\
+\midrule
+\endhead
+\midrule
+\multicolumn{6}{r}{Continued on next page}\\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\multirow{14}{*}{ADHD-200}
+& BalanceGCL & \res{62.75}{6.04} & \res{3.78}{5.64} & \res{6.28}{8.20} & \res{58.61}{7.56}\\
+& HistoGraph & \res{61.83}{0.00} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{38.21}{0.00}\\
+& UniImb & \res{56.34}{10.29} & \res{0.10}{0.23} & \res{-0.32}{0.71} & \res{36.70}{5.24}\\
+& DiffLift & \res{61.53}{0.68} & \res{0.01}{0.03} & \res{-0.10}{0.23} & \res{38.76}{1.23}\\
+& MaxCutPool & \res{61.83}{0.00} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{38.21}{0.00}\\
+& CellCLAT & \res{60.46}{3.56} & \res{1.39}{1.74} & \res{2.90}{3.20} & \res{54.31}{3.69}\\
+& DualPrism & \res{63.36}{1.95} & \res{1.96}{2.16} & \res{3.65}{3.74} & \res{49.48}{10.66}\\
+& KAGNN & \res{61.83}{0.00} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{38.21}{0.00}\\
+& MultiNet & \res{61.83}{0.00} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{38.21}{0.00}\\
+& HSPGKN & \res{62.75}{3.72} & \res{2.91}{2.35} & \res{4.21}{4.69} & \res{53.00}{9.24}\\
+& DGDA & \res{62.29}{4.50} & \res{2.58}{2.69} & \res{4.09}{4.55} & \res{53.18}{8.82}\\
+& RSNN & \res{61.83}{0.00} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{38.21}{0.00}\\
+& TopoFormer & \res{61.83}{0.00} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{38.21}{0.00}\\
+\rowcolor{topologypurple!45}& \method{} & \res{66.26}{4.23} & \res{5.88}{4.06} & \res{9.90}{5.83} & \res{62.86}{4.55}\\
+\midrule
+
+\multirow{14}{*}{BZR}
+& BalanceGCL & \res{82.94}{6.90} & \res{21.18}{20.42} & \res{32.91}{23.02} & \res{70.32}{12.42}\\
+& HistoGraph & \res{78.77}{0.42} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{44.06}{0.13}\\
+& UniImb & \res{67.16}{25.82} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{38.70}{11.94}\\
+& DiffLift & \res{78.77}{0.42} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{44.06}{0.13}\\
+& MaxCutPool & \res{78.77}{0.42} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{44.06}{0.13}\\
+& CellCLAT & \res{80.73}{4.47} & \res{12.15}{11.89} & \res{20.05}{15.95} & \res{61.97}{10.46}\\
+& DualPrism & \res{82.97}{5.63} & \res{16.64}{20.65} & \res{25.20}{25.54} & \res{63.26}{16.16}\\
+& KAGNN & \res{78.77}{0.42} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{44.06}{0.13}\\
+& MultiNet & \res{78.77}{0.42} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{44.06}{0.13}\\
+& HSPGKN & \res{78.77}{0.42} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{44.06}{0.13}\\
+& DGDA & \res{77.06}{4.22} & \res{0.03}{0.06} & \res{-0.49}{1.09} & \res{44.82}{1.57}\\
+& RSNN & \res{78.77}{0.42} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{44.06}{0.13}\\
+& TopoFormer & \res{78.77}{0.42} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{44.06}{0.13}\\
+\rowcolor{topologypurple!45}& \method{} & \res{83.93}{6.42} & \res{24.22}{18.52} & \res{37.03}{19.92} & \res{73.10}{9.65}\\
+\midrule
+
+\multirow{14}{*}{COX2}
+& BalanceGCL & \res{83.08}{1.46} & \res{18.23}{4.68} & \res{31.66}{5.09} & \res{70.48}{3.16}\\
+& HistoGraph & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& UniImb & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& DiffLift & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& MaxCutPool & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& CellCLAT & \res{76.88}{1.51} & \res{0.80}{1.02} & \res{2.93}{3.79} & \res{48.75}{4.08}\\
+& DualPrism & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& KAGNN & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& MultiNet & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& HSPGKN & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& DGDA & \res{68.05}{22.42} & \res{0.10}{0.23} & \res{0.76}{1.71} & \res{40.61}{7.24}\\
+& RSNN & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+& TopoFormer & \res{78.16}{0.46} & \res{0.00}{0.00} & \res{0.00}{0.00} & \res{43.87}{0.14}\\
+\rowcolor{topologypurple!45}& \method{} & \res{82.01}{2.12} & \res{16.67}{5.57} & \res{29.99}{4.00} & \res{70.08}{1.30}\\
+\midrule
+
+\multirow{14}{*}{AIDS}
+& BalanceGCL & \res{99.45}{0.45} & \res{94.20}{4.37} & \res{97.49}{2.04} & \res{99.14}{0.70}\\
+& HistoGraph & \res{93.50}{1.08} & \res{56.47}{5.40} & \res{71.97}{3.92} & \res{89.77}{1.46}\\
+& UniImb & \res{96.85}{2.97} & \res{77.68}{14.87} & \res{85.51}{13.92} & \res{94.52}{5.76}\\
+& DiffLift & \res{79.75}{0.43} & \res{0.05}{0.09} & \res{-0.15}{0.20} & \res{44.60}{0.38}\\
+& MaxCutPool & \res{99.30}{0.27} & \res{92.81}{2.45} & \res{96.79}{1.26} & \res{98.89}{0.44}\\
+& CellCLAT & \res{99.30}{0.21} & \res{92.93}{1.71} & \res{96.78}{0.96} & \res{98.89}{0.34}\\
+& DualPrism & \res{91.65}{2.00} & \res{48.64}{7.87} & \res{65.48}{7.18} & \res{87.34}{2.81}\\
+& KAGNN & \res{92.70}{2.46} & \res{52.76}{11.90} & \res{69.17}{9.89} & \res{88.65}{4.00}\\
+& MultiNet & \res{86.65}{5.05} & \res{27.23}{19.28} & \res{39.93}{25.34} & \res{72.42}{16.64}\\
+& HSPGKN & \res{96.60}{0.80} & \res{72.62}{5.12} & \res{84.71}{3.63} & \res{94.55}{1.36}\\
+& DGDA & \res{92.85}{1.58} & \res{52.26}{7.09} & \res{68.95}{6.77} & \res{88.41}{2.91}\\
+& RSNN & \res{99.30}{0.60} & \res{93.37}{5.18} & \res{96.78}{2.75} & \res{98.88}{0.96}\\
+& TopoFormer & \res{94.40}{1.01} & \res{61.03}{5.02} & \res{76.06}{4.04} & \res{91.48}{1.51}\\
+\rowcolor{topologypurple!45}& \method{} & \res{99.40}{0.28} & \res{93.69}{2.40} & \res{97.24}{1.31} & \res{99.05}{0.46}\\
+\midrule
+
+\multirow{14}{*}{Tox21}
+& BalanceGCL & \res{92.64}{4.40} & \res{9.41}{11.20} & \res{16.88}{16.70} & \res{58.38}{9.06}\\
+& HistoGraph & \res{92.65}{4.65} & \res{9.39}{13.33} & \res{15.59}{20.24} & \res{57.22}{11.42}\\
+& UniImb & \res{91.92}{5.36} & \res{1.15}{3.62} & \res{2.65}{7.77} & \res{49.87}{4.93}\\
+& DiffLift & \res{92.25}{4.76} & \res{1.68}{4.77} & \res{3.40}{9.15} & \res{50.10}{5.50}\\
+& MaxCutPool & \res{92.38}{4.80} & \res{4.63}{10.70} & \res{7.54}{16.92} & \res{52.15}{9.61}\\
+& CellCLAT & \res{92.13}{4.77} & \res{2.09}{2.65} & \res{4.74}{5.33} & \res{51.34}{3.11}\\
+& DualPrism & \res{92.66}{4.51} & \res{8.67}{12.19} & \res{14.87}{19.21} & \res{56.97}{10.80}\\
+& KAGNN & \res{92.50}{4.66} & \res{5.78}{11.09} & \res{9.67}{18.12} & \res{53.49}{10.50}\\
+& MultiNet & \res{92.34}{4.83} & \res{3.99}{10.07} & \res{6.41}{15.72} & \res{51.42}{8.93}\\
+& HSPGKN & \res{92.38}{4.89} & \res{6.07}{12.05} & \res{10.05}{18.38} & \res{53.85}{10.39}\\
+& DGDA & \res{92.54}{4.58} & \res{7.14}{11.29} & \res{11.81}{18.25} & \res{54.90}{10.42}\\
+& RSNN & \res{92.67}{4.56} & \res{7.99}{12.33} & \res{12.94}{19.11} & \res{55.53}{11.09}\\
+& TopoFormer & \res{92.43}{4.76} & \res{6.21}{10.70} & \res{10.95}{17.75} & \res{54.40}{10.27}\\
+\rowcolor{topologypurple!45}& \method{} & \res{92.71}{4.37} & \res{11.44}{11.87} & \res{20.79}{16.62} & \res{60.70}{8.90}\\
+\end{longtable}
+\renewcommand{\arraystretch}{1}
+\normalsize
+\twocolumn
+
+\subsection{Ranks and strict-mean dominance}
+
+Table~\ref{tab:ranks} uses all 35 archived comparators. On ADHD-200, \method{} ranks second for all four metrics and strictly exceeds all four means of 34 comparators. On BZR, NMI ranks first; the other metrics rank second, and 34 methods are jointly dominated. On COX2, each metric ranks third and the proposed model jointly exceeds 33 methods. AIDS accuracy reaches 99.40\%; the corresponding ranks are fifth for Accuracy and NMI and sixth for ARI and Macro-F1. Tox21 shows the importance of looking beyond Accuracy: Accuracy ranks eighth, but ARI and Macro-F1 both rank first, while NMI ranks second. Across all five datasets simultaneously, 23 of the 35 methods have lower means on every one of the 20 dataset--metric combinations.
+
+\begin{table*}[t]
+\centering
+\caption{Ranks among \method{} plus 35 comparators and the number of comparators whose four means are all strictly lower on each dataset. Ties are not counted as strict wins.}
+\label{tab:ranks}
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+Dataset & Acc. rank & NMI rank & ARI rank & Macro-F1 rank & All-four strict wins \\
+\midrule
+ADHD-200 & 2 & 2 & 2 & 2 & 34/35 \\
+BZR      & 2 & 1 & 2 & 2 & 34/35 \\
+COX2     & 3 & 3 & 3 & 3 & 33/35 \\
+AIDS     & 5 & 5 & 6 & 6 & 30/35 \\
+Tox21    & 8 & 2 & 1 & 1 & 28/35 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Dataset-level interpretation}
+
+\paragraph{ADHD-200.}
+The 66.26$\pm$4.23 Accuracy and 62.86$\pm$4.55 Macro-F1 indicate that improvement is not confined to the majority control class. NMI and ARI remain modest in absolute terms (5.88 and 9.90), emphasizing that subject-level brain graphs remain difficult to partition cleanly. Their second-place ranks should be read as relative benchmark performance, not as evidence of a clinically separable embedding.
+
+\paragraph{BZR.}
+The model reaches 83.93$\pm$6.42 Accuracy, 24.22$\pm$18.52 NMI, 37.03$\pm$19.92 ARI, and 73.10$\pm$9.65 Macro-F1. NMI ranks first among all methods. The large NMI and ARI deviations reveal fold sensitivity in this small, imbalanced dataset; the mean advantage is descriptive and should not be interpreted as significant.
+
+\paragraph{COX2.}
+The four means are 82.01, 16.67, 29.99, and 70.08. Although BalanceGCL is higher in the selected table on each mean, \method{} exceeds 33 of 35 comparators on all four metrics. Its relatively small Macro-F1 standard deviation (1.30) suggests consistent folds in this run, but formal variance or paired significance comparisons were not conducted.
+
+\paragraph{AIDS.}
+Accuracy reaches 99.40$\pm$0.28, accompanied by 99.05$\pm$0.46 Macro-F1, 93.69$\pm$2.40 NMI, and 97.24$\pm$1.31 ARI. The simultaneous strength of all four metrics argues against explaining the result solely through the majority class. Nevertheless, several comparators have higher means, and molecular scaffold or out-of-distribution splits were not evaluated.
+
+\paragraph{Tox21.}
+The 92.71$\pm$4.37 Accuracy is less discriminative because of endpoint-specific imbalance. The first-place ARI (20.79$\pm$16.62) and Macro-F1 (60.70$\pm$8.90), together with second-place NMI (11.44$\pm$11.87), provide more relevant evidence of class-balanced structure. Large standard deviations reflect heterogeneity across folds and the macro-aggregation of twelve tasks.
+
+\subsection{Improvement over the direct foundation}
+
+Relative to BalanceGCL, \method{} increases all four means on ADHD-200, BZR, and Tox21. For example, Tox21 improves from 58.38 to 60.70 Macro-F1 and from 16.88 to 20.79 ARI, while Accuracy changes from 92.64 to 92.71. This pattern is consistent with the intended effect under imbalance: representation structure can improve more than majority-dominated Accuracy. BalanceGCL remains higher on all four COX2 means and on all four AIDS means. Thus, the proposed additions are not uniformly superior to their foundation; they trade a small loss on those datasets for broad gains elsewhere. No statistical test has been performed to determine whether any pairwise difference is reliable beyond the observed folds.
+
+\section{Ablation Study Plan}
+\label{sec:ablation}
+
+No ablation experiment has yet been run for the five-dataset study. Table~\ref{tab:ablationplan} is a planned design, not a result table. The primary question is whether the three contributions are complementary rather than whether any single component explains all gains. Every variant will use the same seed schedule, folds, pretraining budget, probe budget, and evaluation metrics as the main experiment.
+
+\begin{table*}[t]
+\centering
+\caption{Planned ablations. All entries are unexecuted; no numerical outcome is implied. RA: reliable augmentation; MVR: multi-view reliability; TCP: topology-conditioned projection; HN: hard negatives.}
+\label{tab:ablationplan}
+\small
+\begin{tabularx}{\textwidth}{lccccYl}
+\toprule
+Variant & RA & MVR & TCP & HN & Question & Status \\
+\midrule
+Full \method{} & \checkmark & \checkmark & \checkmark & \checkmark & Reference configuration & \notrun \\
+Uniform view weights & \checkmark & -- & \checkmark & \checkmark & Does sample-specific weighting matter? & \notrun \\
+Random/fixed augmentations & -- & \checkmark & \checkmark & \checkmark & Does reliable complementary augmentation matter? & \notrun \\
+Plain MLP projection & \checkmark & \checkmark & -- & \checkmark & Does topology conditioning improve geometry? & \notrun \\
+No topology score & \checkmark & \checkmark & partial & \checkmark & Is explicit relation preservation necessary? & \notrun \\
+No hard negatives & \checkmark & \checkmark & \checkmark & -- & Do routed hard negatives add value? & \notrun \\
+Attribute-mask only & partial & \checkmark & \checkmark & \checkmark & Is subgraph complementarity useful? & \notrun \\
+Subgraph-only & partial & \checkmark & \checkmark & \checkmark & Is attribute complementarity useful? & \notrun \\
+No local-closure view & \checkmark & \checkmark & partial & \checkmark & Is closure evidence necessary? & \notrun \\
+Last GIN layer only & \checkmark & \checkmark & partial & \checkmark & Does multi-depth fusion help? & \notrun \\
+Binary sample filtering & \checkmark & binary & \checkmark & \checkmark & Is continuous retention preferable to deletion? & \notrun \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+The analysis will report per-dataset differences in all four metrics, not only Accuracy. Reliability-specific diagnostics should include the distribution and entropy of $w_{ij}$, the correlation between weights and cross-view perturbation magnitude, and minority/majority weight distributions. Topology diagnostics should compare pre/post-projection neighborhood overlap and pairwise-distance distortion. Because the same folds can be aligned across variants, paired confidence intervals or a suitable paired nonparametric analysis may be added after the experiments; no such result is presently claimed.
+
+\section{Parameter Sensitivity Plan}
+
+No sensitivity sweep has been conducted for the reported five-dataset results. We plan a one-factor-at-a-time screen followed by a limited joint search around stable regions. The default is marked in Table~\ref{tab:sensitivity}. Dataset splits and training budgets will remain fixed during screening, and model selection will not use the held-out test folds.
+
+\begin{table*}[t]
+\centering
+\caption{Planned parameter-sensitivity grid. The table specifies future runs only.}
+\label{tab:sensitivity}
+\small
+\begin{tabularx}{\textwidth}{lYll}
+\toprule
+Parameter & Planned values & Current/default & Status \\
+\midrule
+Attribute/subgraph budget & $\{0.05,0.10,0.20,0.30,0.40\}$ & 0.10 & \notrun \\
+Minimum retained ratio & $\{0.40,0.50,0.60,0.70,0.80\}$ & 0.60 & \notrun \\
+Reliability floor & $\{0,0.01,0.05,0.10,0.20\}$ & 0.05 & \notrun \\
+Topology evidence ratio & $\{0,0.25,0.50,0.75,1.00\}$ & 0.50 & \notrun \\
+$\lambda_{\rm clean}$ & $\{0,0.05,0.10,0.25,0.50,1.00\}$ & 0.25 & \notrun \\
+$\lambda_{\rm topo}$ & $\{0,0.05,0.10,0.25,0.50,1.00\}$ & 0.25 & \notrun \\
+Topology strata $K$ & $\{4,8,16,32\}$ & 16 & \notrun \\
+Bottleneck dimension & $\{8,16,32,64\}$ & 32 & \notrun \\
+Temperature $\tau$ & $\{0.10,0.20,0.50,1.00\}$ & 0.20 & \notrun \\
+GIN depth & $\{2,3,4,5\}$ & 3 & \notrun \\
+Hidden dimension & $\{16,32,64,128\}$ & 32 & \notrun \\
+Batch size & $\{32,64,128,256\}$ & 128 & \notrun \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+For each sweep, we will plot the four metrics with fold-level uncertainty, training stability, and peak memory. Particular attention will be paid to non-monotonic behavior: strong augmentation may improve invariance but destroy molecular motifs; a large reliability floor may suppress adaptivity; too many topology strata may overfit small datasets; and a narrow bottleneck may remove both noise and useful minority-class information. Joint $\lambda_{\rm clean}\times\lambda_{\rm topo}$ heatmaps are planned because the two rewards may interact.
+
+\section{Discussion}
+
+\subsection{Why the three mechanisms are complementary}
+
+Reliable augmentation, multi-view reliability, and topology-conditioned projection act at different stages. Augmentation determines what invariances the encoder observes. Reliability learning decides how much each observation should influence the representation. Topology conditioning decides how the retained information is organized before contrast. A topology projector cannot recover semantics already deleted by an excessively destructive view; reliability weighting alone cannot repair a projection that collapses different structural regimes; and benign augmentations do not by themselves prevent hard negatives from distorting the contrastive geometry. Their end-to-end combination is therefore the central contribution.
+
+\subsection{Reading four metrics together}
+
+The results illustrate why one metric is insufficient. Tox21 Accuracy is high for many methods, yet NMI, ARI, and Macro-F1 vary substantially. Several baseline rows show near-majority-class behavior: Accuracy remains close to the class prior while NMI and ARI approach zero and Macro-F1 is low. In contrast, \method{} improves Tox21 ARI and Macro-F1 ranks without producing an equally dramatic Accuracy change. AIDS is different: all four metrics are high, supporting both classification performance and partition agreement. ADHD-200 remains difficult in absolute NMI and ARI despite strong relative ranks.
+
+\subsection{Clinical and chemical interpretation}
+
+The mechanism is domain-general but not domain-agnostic. In ADHD-200, attribute masking challenges intensity statistics while the fixed spatial lattice is largely retained; subgraph sampling challenges spatial continuity. In molecules, attribute masking challenges atom descriptors and subgraph sampling challenges local chemical motifs. Reliability weighting can down-weight a damaged view, but it does not establish that the retained features are causal biomarkers or pharmacophores. Likewise, topology strata are learned representation devices, not clinically validated subtypes or chemical mechanism labels.
+
+\subsection{Reproducibility and comparison scope}
+
+Using one project implementation reduces differences caused by loaders, split generators, and metric code. It does not make all algorithms mathematically identical or remove all adaptation bias. Some methods are naturally self-supervised; others are supervised or require method-specific objectives. We therefore describe the table as a unified project benchmark rather than as a reproduction of claims in the original papers. The full archived outputs should accompany a submission, together with environment files, exact split indices, and method-specific adaptation notes.
+
+\section{Limitations}
+\label{sec:limitations}
+
+First, the reported evidence consists of five-fold means and standard deviations from one seed. Fold variation can be large, especially for BZR and Tox21, and no statistical significance test has been performed. Second, the ablation and sensitivity studies in Sections~\ref{sec:ablation} and the following section are plans; they must be completed before making component-level causal claims. Third, self-supervised pretraining is performed without labels before fold-wise linear probing. Although probe labels are isolated by fold, a stricter inductive protocol would repeat pretraining using only each outer training fold. Fourth, random stratified molecular splits do not measure scaffold shift or prospective generalization. Fifth, Tox21 macro-aggregation may hide endpoint-specific failure, and missing labels are assumed ignorable after task-wise exclusion. Sixth, ADHD-200 uses one fixed patch-graph construction and does not establish robustness to acquisition site, preprocessing choice, atlas, or demographic confounding.
+
+Seventh, local-closure residuals and topology strata are computational proxies rather than exact topological invariants. Their interpretability should not be overstated. Eighth, the 35 comparator values arise from project-specific PyG adaptations; adaptation quality may differ across methods, and the numbers must not be attributed to the original publications. Ninth, the paper presently contains citation placeholders because bibliographic metadata has not been independently verified. These placeholders must be replaced with checked primary sources before submission. Finally, high benchmark performance does not imply clinical readiness, biological mechanism discovery, calibrated risk, or safety in deployment.
+
+\section{Conclusion}
+
+We presented \method{}, an end-to-end contrastive framework for medical graph classification. Its core thesis is that reliable augmentation, multi-view reliability learning, and topology-conditioned projection should be optimized together. Complementary views expose attribute and structural instability; continuous reliability weights retain difficult graphs while reducing the influence of damaged observations; and topology-conditioned projection organizes the representation before balanced contrast with in-batch and hard negatives. Across ADHD-200, BZR, COX2, AIDS, and Tox21, the model provides competitive five-fold Accuracy, NMI, ARI, and Macro-F1, including first-ranked BZR NMI and first-ranked Tox21 ARI and Macro-F1 in the 35-method project benchmark. These comparisons concern strict means only and do not establish statistical significance. The next required steps are the planned ablations, sensitivity sweeps, multi-seed uncertainty analysis, strictly inductive pretraining, and domain-specific external validation.
+
+\appendix
+
+\section{Candidate Titles and Model Acronyms}
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{ReToGCL: Reliability-Weighted Topology-Conditioned Graph Contrastive Learning for Medical Graph Classification.} This is the title selected for the present draft; the acronym foregrounds reliability and topology.
+    \item \textbf{RAMP-GCL: Reliability-Aware Multi-View Projection for Contrastive Medical Graph Learning.} This option foregrounds the sample--view weighting and projection pipeline.
+    \item \textbf{TriMedGCL: Reliable Augmentation, Multi-View Reliability, and Topology-Conditioned Projection for Medical Graph Learning.} This option foregrounds the three-part contribution.
+\end{enumerate}
+
+\section{Detailed Instructions for Redrawing the Framework Figure}
+
+The publication-ready framework should be redrawn as a horizontal vector diagram with an aspect ratio near $3.4{:}1$ (for example, 2040$\times$600 px or 17.8$\times$5.2 cm). Use a white background, dark-gray 0.75--1.0 pt outlines, rounded rectangles, and a single sans-serif typeface. Keep the visual order strictly left to right:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Input.} Draw one graph icon with 8--12 nodes and sparse undirected edges. Label it ``Input medical graph $G=(V,E,X)$''. Optionally place a small brain-patch thumbnail and molecule thumbnail below it to indicate the two domains without implying that they are fused.
+    \item \textbf{Complementary augmentation.} Split the pipeline into two parallel lanes. The upper blue lane is ``Attribute masking'' and should show the same graph with several node feature bars faded or crossed out. The lower blue lane is ``Subgraph sampling'' and should show a retained sampled subgraph with removed nodes in light gray. Add a brace labelled ``reliable complementary views'' and avoid calling either lane clean.
+    \item \textbf{Shared encoder.} Merge neither lane visually; instead, route both through two copies of the same green GIN block connected by a vertical equality/weight-sharing symbol. Each block contains three stacked mini-layers labelled GIN--BN--ReLU. Add ``shared $\theta$'' above the pair.
+    \item \textbf{Multi-granularity and multi-depth readout.} For each lane, draw four small tokens labelled Node, Edge, Closure, and Graph, plus three thinner bars labelled shallow, middle, deep. Join them into a common evidence panel. Use the closure icon as a triangle or locally closed neighborhood, but label it ``local-closure proxy'' rather than ``persistent homology''.
+    \item \textbf{Reliability learning.} Use an orange panel. Place three gauges labelled Agreement $A$, Stability $S$, and Diversity $D$. Below them show a softmax weight vector such as $(0.18,0.25,0.41,0.16)$ only as a schematic example and mark it ``illustrative''. Show the equation $z_i^{(a)}=\sum_jw_{ij}v_{ij}^{(a)}$. Make line thickness or opacity from the four tokens to the fused vector proportional to the illustrative weights. Include a note ``continuous weighting; no sample deletion''.
+    \item \textbf{Topology-conditioned projection.} Use a purple panel. At the top show closure evidence and three depth-scale bars feeding a small ``topology router''. In the center draw several softly separated strata or curved sheets, then a narrow 32-dimensional bottleneck, and finally a compact contrastive plane. Label the relation-preservation arrow $\mathcal L_{\rm topo}$. Avoid drawing ground-truth class labels inside this self-supervised block.
+    \item \textbf{Balanced contrastive objective.} Use a pale-red panel. Draw the two augmentations of one graph as a positive pair joined by a solid green line. Draw other minibatch graphs and routed hard negatives around the anchor with red repulsive arrows. Label the objective $\mathcal L_{\rm con}-\lambda_{\rm clean}\mathcal L_{\rm rel}-\lambda_{\rm topo}\mathcal L_{\rm topo}$.
+    \item \textbf{Evaluation.} Use a neutral-gray panel separated by a dashed vertical line labelled ``after pretraining''. Show a snowflake or lock on the encoder and a single linear layer leading to the four outputs Accuracy, NMI, ARI, and Macro-F1. Add ``stratified 5-fold'' beneath it.
+\end{enumerate}
+
+Use blue for data perturbations, green for shared encoding, orange for reliability, purple for topology organization, red only for contrastive repulsion, and gray for evaluation. Solid arrows denote forward representations, dashed arrows denote auxiliary objectives, and a dotted arrow from topology evidence to the projector denotes conditioning. All equations should be typeset rather than embedded as raster text. The figure must remain legible when printed at one-page width in grayscale; distinguish stages with labels and line styles in addition to color. Export as PDF or SVG with embedded fonts.
+
+\section{Reproducibility Checklist}
+
+\begin{itemize}[leftmargin=*]
+    \item Self-supervised epochs: 40; linear-probe epochs: 200.
+    \item Five stratified folds; seed 42; all values reported as mean $\pm$ standard deviation.
+    \item GIN depth 3; hidden dimension 32; ReLU; batch normalization; global pooling; shared view encoder.
+    \item Batch size 128; Adam; learning rate $10^{-3}$; weight decay $10^{-5}$.
+    \item Tox21: 12 independently stratified binary endpoints; task-local exclusion of missing labels; no label imputation; macro-average over endpoints.
+    \item Main-table baseline values: unified project PyG adaptations, not original-paper reports.
+    \item Unperformed experiments: ablations, sensitivity sweeps, significance tests, multi-seed repeats, scaffold splits, and external validation.
+\end{itemize}
+
+\section*{Reference Completion Notice}
+
+No bibliographic record, author list, venue, year, or DOI has been inferred in this draft. Every unverified reference is shown literally as \citeneeded. Before submission, each placeholder must be replaced with a verified primary-source entry, and dataset licenses and access statements must be added.
+
+\clearpage
+\onecolumn
+\section{Complete 18-Dataset SOTA Result Matrix}
+\label{sec:all18results}
+
+Table~\ref{tab:all18full} reports all four metrics for the 35 comparator adaptations and \method{} on every graph-classification dataset currently supported by the project. This yields 648 completed method--dataset rows. The comparator numbers are outputs of the project's unified PyG adaptation, data processing, and five-fold protocol; they must not be interpreted as values directly reported in the corresponding original papers. SIDER and Tox21 are macro-averages over 27 and 12 independently evaluated binary endpoints, respectively. ClinTox follows the project's joint three-class construction and is not the official two-endpoint ROC--AUC protocol. All entries are percentages reported as mean $\pm$ standard deviation.
+
+Pale-red rows expose a useful failure signature: NMI and ARI are both exactly $0.00\pm0.00$, which is consistent with a constant predicted partition across folds. Such rows can retain apparently non-trivial accuracy on an imbalanced dataset by predicting only the majority class; hence Accuracy, NMI, ARI, and Macro-F1 must be interpreted jointly. Boldface marks only the largest completed five-fold mean in each dataset and metric, not statistical significance. The matrix is descriptive rather than a cross-protocol aggregate, and raw means should not be averaged indiscriminately across binary, multiclass, and multi-task settings.
+
+\input{full_sota_results.tex}
+
+\end{document}

@@ -1,0 +1,49 @@
+# 四个图对比学习基线的统一复现实验配置。
+methods:
+  - graphcl
+  - joaov2
+  - rgcl
+  - simgrace
+
+datasets:
+  graph_classification:
+    - NCI1
+    - PROTEINS
+    - COLLAB
+    - MUTAG
+    - COLORS-3
+  node_classification:
+    - Cora
+    - CiteSeer
+    - PubMed
+
+model:
+  hidden_dim: 32
+  layers: 3
+  temperature: 0.2
+
+training:
+  seed: 42
+  batch_size: 128
+  augmentation_ratio: 0.2
+  epochs:
+    graphcl: 20
+    joaov2: 40
+    rgcl: 40
+    simgrace: 20
+  learning_rate:
+    graphcl: 0.01
+    joaov2: 0.001
+    rgcl: 0.01
+    simgrace: 0.01
+  joaov2_gamma: 0.1
+  simgrace_eta: 1.0
+
+evaluation:
+  folds: 5
+  classifier: linear_probe
+  probe_epochs: 200
+  metric: accuracy
+
+output:
+  output_dir: outputs/baselines
