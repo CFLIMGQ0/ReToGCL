@@ -34,7 +34,10 @@ from src.scripts.graph_classification_datasets import (
 )
 
 
-PROTOCOL = "modular_cross_module_triple_from_top5_pairwise_fixed_ABC_v1"
+SUPPORTED_PROTOCOLS = {
+    "modular_cross_module_triple_from_top5_pairwise_fixed_ABC_v1",
+    "modular_cross_module_triple_from_pairwise_rank6_10_fixed_ABC_v1",
+}
 FIDELITY = "module_position_faithful_differentiable_triple_implementation"
 
 
@@ -61,12 +64,18 @@ def resolve_path(path: Path) -> Path:
     return path.resolve() if path.is_absolute() else (PROJECT_ROOT / path).resolve()
 
 
-def load_task(manifest: Path, task_id: str) -> dict:
+def load_manifest_task(manifest: Path, task_id: str, task_json: str | None) -> tuple[str, dict]:
     payload = json.loads(manifest.read_text(encoding="utf-8"))
+    protocol = str(payload.get("metadata", {}).get("protocol", ""))
+    if protocol not in SUPPORTED_PROTOCOLS:
+        raise RuntimeError(f"任务清单协议不兼容：{protocol}")
     matches = [task for task in payload["tasks"] if task["task_id"] == task_id]
     if len(matches) != 1:
         raise RuntimeError(f"任务 {task_id} 在清单中出现 {len(matches)} 次")
-    return matches[0]
+    task = json.loads(task_json) if task_json else matches[0]
+    if task != matches[0]:
+        raise RuntimeError("命令行任务 JSON 与清单记录不一致")
+    return protocol, task
 
 
 def validate_parameters(idea_id: str, values: dict) -> dict[str, float]:
@@ -87,15 +96,15 @@ def main() -> None:
     manifest = resolve_path(args.manifest)
     data_root = resolve_path(args.data_root)
     output_dir = resolve_path(args.output_dir)
+    protocol, task = load_manifest_task(manifest, args.task_id, args.task_json)
     result_path = output_dir / "jobs" / f"{args.task_id}.json"
     if result_path.exists() and not args.force:
         result = json.loads(result_path.read_text(encoding="utf-8"))
-        if result.get("status") == "completed" and result.get("protocol") == PROTOCOL:
+        if result.get("status") == "completed" and result.get("protocol") == protocol:
             print(f"已存在，跳过：{result_path}")
             return
         raise RuntimeError(f"拒绝复用不兼容结果：{result_path}")
 
-    task = json.loads(args.task_json) if args.task_json else load_task(manifest, args.task_id)
     if task.get("task_id") != args.task_id:
         raise RuntimeError("命令行 task-id 与任务 JSON 不一致")
     idea_ids = tuple(str(idea_id) for idea_id in task["idea_ids"])
@@ -135,7 +144,7 @@ def main() -> None:
     batch_size = min(args.batch_size, 64 if dataset == "COLLAB" else args.batch_size)
 
     expected_checkpoint = {
-        "protocol": PROTOCOL,
+        "protocol": protocol,
         "fidelity": FIDELITY,
         "idea_ids": list(idea_ids),
         "modules": list(modules),
@@ -242,7 +251,7 @@ def main() -> None:
         "source_top_pairs": list(task["source_top_pairs"]),
         "dataset": dataset,
         "dataset_protocol": dataset_protocol(dataset),
-        "protocol": PROTOCOL,
+        "protocol": protocol,
         "training": "self_supervised_pretrain_then_stratified_five_fold_linear_probe",
         "fidelity": FIDELITY,
         "fixed_non_idea_parameters": {

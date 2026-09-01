@@ -120,3 +120,23 @@
 - 204 运行时结果目录：`/xmlg/Lim/Project-xmlg_runtime/IDEA_TRIPLE_MODULAR_TOP5/jobs/`
 - SOTA 对照：`outputs/sota/jobs/`、`outputs/paper_sota/jobs/`、`outputs/paper_sota_2025_2026/jobs/` 及 `outputs/three_datasets_20260812/` 下对应目录
 - 指标比较均使用五折均值；“超过”采用严格大于，不使用标准差区间重叠或显著性检验作为筛选条件。
+
+## 6. 二二组合第6至10名扩展实验
+
+启动时间：2026-09-01。该实验沿用前五名实验的七数据集、固定 ABC 参数、自监督预训练和五折 Linear Probe 协议。二二组合排名首先按四指标同时严格超过 SOTA 的次数降序，再按四项指标的单项胜出次数降序。
+
+| 排名 | 二二组合 | 四指标全胜数 | 单项胜出数 |
+| ---: | --- | ---: | ---: |
+| 6 | D8-I06 + D10-I10 | 188 | 778 |
+| 7 | D7-I10 + D10-I02 | 187 | 776 |
+| 8 | D7-I06 + D10-I07 | 186 | 770 |
+| 9 | D11-I01 + D10-I03 | 185 | 773 |
+| 10 | D1-I06 + D10-I04 | 185 | 770 |
+
+五个二二组合扩展得到 426 个三三组合，其中 4 个已由前五名实验覆盖。本轮对剩余 422 个新组合运行 7 个数据集，共 2,954 个任务。任务按算力比例分为三片：202 使用 GPU 0--1、每卡 3 个并发槽位，承担第 0 片（985 项）；204 使用 GPU 0--3、每卡 3 个并发槽位，承担第 1、2 片（1,969 项）。
+
+- 任务生成脚本：`src/scripts/prepare_modular_idea_triples_rank6_10.py`
+- 两机启动脚本：`src/scripts/launch_modular_triples_rank6_10_6gpu.sh`
+- 本机清单与结果：`IDEA_TRIPLE_MODULAR_RANK6_10/`
+- 204 运行时结果：`/xmlg/Lim/Project-xmlg_runtime/IDEA_TRIPLE_MODULAR_RANK6_10/`
+- 当前状态：运行中；尚未汇总或报告任何未完成结果。

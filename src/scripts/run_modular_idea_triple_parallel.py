@@ -1,4 +1,4 @@
-"""在指定 GPU 上并行运行前五名两两组合扩展出的三模块任务。"""
+"""在指定 GPU 上并行运行受支持清单中的三模块任务。"""
 
 from __future__ import annotations
 
@@ -17,7 +17,10 @@ from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WORKER = PROJECT_ROOT / "src/scripts/run_modular_idea_triple_trial.py"
-PROTOCOL = "modular_cross_module_triple_from_top5_pairwise_fixed_ABC_v1"
+SUPPORTED_PROTOCOLS = {
+    "modular_cross_module_triple_from_top5_pairwise_fixed_ABC_v1",
+    "modular_cross_module_triple_from_pairwise_rank6_10_fixed_ABC_v1",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -53,17 +56,18 @@ def gpu_free_memory() -> dict[int, int]:
     }
 
 
-def valid_result(path: Path) -> bool:
+def valid_result(path: Path, protocol: str) -> bool:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return False
-    return payload.get("status") == "completed" and payload.get("protocol") == PROTOCOL
+    return payload.get("status") == "completed" and payload.get("protocol") == protocol
 
 
 def write_status(
     path: Path,
     *,
+    protocol: str,
     total: int,
     queue: list,
     running: dict,
@@ -73,7 +77,7 @@ def write_status(
 ) -> None:
     payload = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
-        "stage": PROTOCOL,
+        "stage": protocol,
         "total": total,
         "queued": len(queue),
         "running_count": len(running),
@@ -113,8 +117,9 @@ def main() -> None:
     output_dir = resolve_path(args.output_dir)
     data_root = resolve_path(args.data_root)
     payload = json.loads(manifest.read_text(encoding="utf-8"))
-    if payload.get("metadata", {}).get("protocol") != PROTOCOL:
-        raise SystemExit("任务清单协议不兼容")
+    protocol = str(payload.get("metadata", {}).get("protocol", ""))
+    if protocol not in SUPPORTED_PROTOCOLS:
+        raise SystemExit(f"任务清单协议不兼容：{protocol}")
     tasks = payload["tasks"]
     selected_shards = set(args.shard_indices)
     selected = [
@@ -125,7 +130,7 @@ def main() -> None:
     queue = [
         task
         for task in selected
-        if not valid_result(output_dir / "jobs" / f"{task['task_id']}.json")
+        if not valid_result(output_dir / "jobs" / f"{task['task_id']}.json", protocol)
     ]
     skipped = total - len(queue)
 
@@ -147,7 +152,7 @@ def main() -> None:
                     break
                 task = queue.pop(0)
                 result_path = output_dir / "jobs" / f"{task['task_id']}.json"
-                if valid_result(result_path) and not args.force:
+                if valid_result(result_path, protocol) and not args.force:
                     skipped += 1
                     progress.update(1)
                     continue
@@ -197,6 +202,7 @@ def main() -> None:
         )
         write_status(
             status_path,
+            protocol=protocol,
             total=total,
             queue=queue,
             running=running,
