@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""并行运行 5 个新增 TDC 数据集上的 ReToGCL、PL069 与 13 个选定 SOTA。"""
+"""并行运行 5 个新增 TDC 数据集上的 ReToGCL、CITA-GCL 与 13 个选定 SOTA。
+
+CITA-GCL 的内部实验编号仍为 PL069，结果路径与历史任务保持兼容。
+"""
 
 from __future__ import annotations
 

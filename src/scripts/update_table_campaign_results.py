@@ -33,8 +33,8 @@ METRIC_TITLES = {
     "ari_percent": "ARI", "macro_f1_percent": "Macro-F1",
 }
 DISPLAY = {
-    "original": "ReToGCL（原始）", "PL069": "PL069", "retogcl": "ReToGCL",
-    "pl069": "PL069", "balancegcl": "BalanceGCL", "khangcl": "Khan-GCL",
+    "original": "ReToGCL（原始）", "PL069": "CITA-GCL", "retogcl": "ReToGCL",
+    "pl069": "CITA-GCL", "balancegcl": "BalanceGCL", "khangcl": "Khan-GCL",
     "cellclat": "CellCLAT", "uniimb": "UniImb", "dualprism": "DualPrism",
     "del": "DEL", "spectre": "SpectRe", "toper": "TopER", "leap": "LEAP",
     "hourglass": "Hourglass", "nodeid": "NodeID", "gnnplus": "GNN+",
@@ -104,7 +104,7 @@ def directed_pair(summary: dict, dataset: str, reference: str, metric: str) -> d
 def build_section() -> str:
     lines = [START, "## 8. 2026-09-04 新增实验", ""]
     lines += [
-        "### 8.1 五个新增 TDC 医学分子数据集：13 个选定 SOTA、ReToGCL 与 PL069",
+        "### 8.1 五个新增 TDC 医学分子数据集：13 个选定 SOTA、ReToGCL 与 CITA-GCL",
         "",
         "所有数值为统一五折 `均值 ± 标准差`（%）；粗体为同一数据集、同一指标最高均值。",
         "",
@@ -134,7 +134,7 @@ def build_section() -> str:
         "",
         "每格为十个种子级五折均值的 `均值 ± 样本标准差 [95% CI]`（%）。所有模型、所有训练种子共享 `split_seed=42` 的同一套外层五折索引；置信区间采用双侧 Student t（df=9）。",
         "",
-        "ReToGCL、PL069、BalanceGCL、Khan-GCL 使用 10 个自监督预训练种子；DEL、SimplicialMP 按项目现有监督式实现使用 10 个训练种子，每个种子分别训练五折，后两者不属于自监督预训练复核。",
+        "ReToGCL、CITA-GCL、BalanceGCL、Khan-GCL 使用 10 个自监督预训练种子；DEL、SimplicialMP 按项目现有监督式实现使用 10 个训练种子，每个种子分别训练五折，后两者不属于自监督预训练复核。",
         "",
     ]
     for dataset in FORMAL_DATASETS:
@@ -152,9 +152,9 @@ def build_section() -> str:
         lines.append("")
 
     lines += [
-        "### 8.4 PL069 的种子配对差值",
+        "### 8.4 CITA-GCL 的种子配对差值",
         "",
-        "正值表示 PL069 更高。每格为相同训练种子、相同外层五折索引下 `PL069 − 对照` 的 `均值 ± 标准差 [95% CI]`（百分点）。完整 15 组模型两两配对结果保存在多种子汇总 JSON 中。",
+        "正值表示 CITA-GCL 更高。每格为相同训练种子、相同外层五折索引下 `CITA-GCL − 对照` 的 `均值 ± 标准差 [95% CI]`（百分点）。完整 15 组模型两两配对结果保存在多种子汇总 JSON 中。",
         "",
         "| 数据集 | 对照 | Accuracy | NMI | ARI | Macro-F1 |",
         "| --- | --- | ---: | ---: | ---: | ---: |",

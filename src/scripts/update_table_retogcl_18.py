@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""把18数据集上的选定 SOTA、ReToGCL 与 PL069 写入 table.md。"""
+"""把18数据集上的选定 SOTA、ReToGCL 与 CITA-GCL 写入 table.md。"""
 
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ def pl069_path(dataset: str) -> Path:
 def model_results(dataset: str) -> list[tuple[str, dict]]:
     values = [
         ("ReToGCL（原始）", load_json(original_path(dataset))),
-        ("PL069", load_json(pl069_path(dataset))),
+        ("CITA-GCL", load_json(pl069_path(dataset))),
     ]
     root = experiment_root(dataset)
     for name, group, stem in SOTAS:
@@ -122,9 +122,9 @@ def comparison(candidate: dict, reference: dict) -> tuple[int, int]:
 def build_section() -> str:
     lines = [
         START_MARKER,
-        "## 7. 18个数据集完整对照：13个选定 SOTA、ReToGCL 与 PL069",
+        "## 7. 18个数据集完整对照：13个选定 SOTA、ReToGCL 与 CITA-GCL",
         "",
-        "本节统一列出当前论文选定的 13 个 SOTA、原始 ReToGCL 和 PL069。"
+        "本节统一列出当前论文选定的 13 个 SOTA、原始 ReToGCL 和 CITA-GCL。"
         "所有数值均为五折 `均值 ± 标准差`（%）；粗体为该数据集、该指标的最高均值。",
         "SIDER 按 27 个官方任务分别五折后作任务宏平均，Tox21 按 12 个官方任务采用相同口径。",
         "",
@@ -165,7 +165,7 @@ def build_section() -> str:
         "“全超 SOTA”表示四项指标全部严格超过一个 SOTA；“指标胜项”分母为 "
         "`13 × 4 = 52`。",
         "",
-        "| 数据集 | PL069全超SOTA | PL069指标胜项 | 原始ReToGCL全超SOTA | 原始指标胜项 | PL069直接胜原始 |",
+        "| 数据集 | CITA-GCL全超SOTA | CITA-GCL指标胜项 | 原始ReToGCL全超SOTA | 原始指标胜项 | CITA-GCL直接胜原始 |",
         "| --- | ---: | ---: | ---: | ---: | ---: |",
     ])
     for dataset, pl_strict, pl_metrics, original_strict, original_metrics, direct in sorted(

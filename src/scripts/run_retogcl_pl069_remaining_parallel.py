@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""在多张 GPU 上补跑 PL069 尚未覆盖的十二个数据集。"""
+"""在多张 GPU 上补跑 CITA-GCL 尚未覆盖的十二个数据集。
+
+保留 PL069 实验编号和历史输出路径，不因更名重复运行已完成任务。
+"""
 
 from __future__ import annotations
 
@@ -162,7 +165,7 @@ def main() -> None:
     failures = []
     completed = 0
     progress = tqdm(
-        total=len(DATASETS), initial=skipped, desc=f"PL069/{args.tag}", unit="数据集"
+        total=len(DATASETS), initial=skipped, desc=f"CITA-GCL/{args.tag}", unit="数据集"
     )
     while queue or running:
         state = gpu_state()

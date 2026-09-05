@@ -1,10 +1,12 @@
-# ReToGCL
+# CITA-GCL
 
 ## 项目目标
 
-ReToGCL 是一个面向医学图分类的可靠性与拓扑条件图对比学习项目。模型通过互补图增强、共享 GIN 编码、多视图可靠性学习和拓扑条件投影改善图级表示，并采用五折 Linear Probe 评估 Accuracy、NMI、ARI 和 Macro-F1。
+CITA-GCL（Cleanliness-Informed Topological Alignment for Graph Contrastive Learning，洁净度引导的拓扑对齐图对比学习）是本项目改进模型的正式名称，对应历史实验配置 `PL069`。模型结合互补图增强、共享 GIN 编码、洁净度引导的语义路由、拓扑条件映射、困难负样本对齐和锚点表征旁路，并采用五折 Linear Probe 评估 Accuracy、NMI、ARI 和 Macro-F1。
 
-英文论文草稿、完整公式、训练伪代码及 18 数据集结果矩阵位于 `paper_retogcl/`。
+原始 ReToGCL 继续作为独立对照保留，不与 CITA-GCL 混用。模型名称与实验编号的对应关系见 [CITA-GCL.md](CITA-GCL.md)，最新实验结果见 [table.md](table.md)。本次更名不改变模型结构、参数、训练协议或结果数值；代码接口、实验编号和历史路径保持兼容，GitHub 仓库地址也保持不变。
+
+原始 ReToGCL 的英文论文草稿、公式、训练伪代码及历史 18 数据集结果矩阵位于 `paper_retogcl/`；该草稿不因本次更名自动成为 CITA-GCL 的论文或结果。
 
 ## 仓库内容说明
 

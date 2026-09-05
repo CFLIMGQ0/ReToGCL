@@ -1,6 +1,8 @@
 # 模块化 BalanceGCL 的唯一模型装配清单。
 # `selected: "none"` 表示使用该位置的原始 BalanceGCL 默认模块；选择 idea 时，
 # 把 `selected` 改成对应 ID。每个模块最多选择一个 idea，论文模型总共选择三个模块。
+# 改进配置 PL069 的正式名称为 CITA-GCL，命名与配置说明见 CITA-GCL.md。
+# 本文件仍是通用模块化基线清单；更名不会切换此处的默认模型或参数。
 
 schema_version: 1
 
