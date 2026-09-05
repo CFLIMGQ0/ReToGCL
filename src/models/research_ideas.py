@@ -168,7 +168,9 @@ class ResearchIdeaBalanceGCL(BalancedGCL):
 
         nodes = history.flatten(1)
         graph_count = int(data.batch.max().item()) + 1
-        graph = global_add_pool(nodes, data.batch, size=graph_count)
+        # 默认 readout 与原先的逐层 global_add_pool + concat 完全等价；通过
+        # 统一接口允许单点实验只替换 M3，而不复制整条 ReToGCL 流水线。
+        graph = self.readout(history, data.batch)
 
         source, target = data.edge_index
         if source.numel():

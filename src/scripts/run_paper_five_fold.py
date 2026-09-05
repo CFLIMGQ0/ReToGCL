@@ -87,6 +87,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/paper_sota"))
     parser.add_argument("--device", default="auto")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--split-seed", type=int, default=None, help="固定外层五折索引的随机种子")
     parser.add_argument("--folds", type=int, default=5)
     parser.add_argument("--hidden-dim", type=int, default=64)
     parser.add_argument("--layers", type=int, default=4)
@@ -259,12 +260,13 @@ def train_supervised_fold(
 
 def run_supervised(args: argparse.Namespace, method: str, dataset_name: str, graphs: list[Data], in_dim: int, num_classes: int, device: torch.device, initial_state: dict[str, Tensor] | None = None) -> dict:
     labels = torch.tensor([int(graph.y) for graph in graphs])
-    test_folds = stratified_folds(labels, args.folds, args.seed)
+    split_seed = args.seed if args.split_seed is None else args.split_seed
+    test_folds = stratified_folds(labels, args.folds, split_seed)
     fold_metrics = {key: [] for key in METRIC_KEYS}
     all_indices = torch.arange(len(graphs))
     for fold_index, test_indices in enumerate(test_folds, start=1):
         train_pool = all_indices[~torch.isin(all_indices, test_indices)]
-        train_indices, validation_indices = inner_split(labels, train_pool, args.seed + fold_index)
+        train_indices, validation_indices = inner_split(labels, train_pool, split_seed + fold_index)
         current = train_supervised_fold(
             args, method, dataset_name, graphs, in_dim, num_classes, fold_index,
             train_indices, validation_indices, test_indices, device, initial_state,
@@ -324,7 +326,10 @@ def run_cellclat(args: argparse.Namespace, dataset_name: str, graphs: list[Data]
         checkpoint.parent.mkdir(parents=True, exist_ok=True)
         torch.save({"model": model.state_dict()}, checkpoint)
     embeddings, labels = extract_embeddings(model, graphs, batch_size, device)
-    metrics = linear_probe_five_fold_metrics(embeddings, labels, device, args.seed, args.folds, args.probe_epochs)
+    metrics = linear_probe_five_fold_metrics(
+        embeddings, labels, device=device, seed=args.seed, split_seed=args.split_seed,
+        folds=args.folds, epochs=args.probe_epochs,
+    )
     return {"training": "self_supervised_cellular_pretrain_then_linear_probe", **{f"{key}_percent": summarize(values) for key, values in metrics.items()}}
 
 
@@ -429,6 +434,7 @@ def main() -> None:
             "task": "graph_classification",
             "fold_protocol": "stratified_5_fold_with_inner_validation_or_linear_probe",
             "seed": args.seed,
+            "split_seed": args.seed if args.split_seed is None else args.split_seed,
             "source_commit": SOURCE_COMMITS[method],
             "implementation": "project_pyg_adapter",
             "dataset_protocol": dataset_protocol(dataset_name),

@@ -19,6 +19,7 @@ Sheaf超图.pdf
 src/references/
 src/sota_sources/
 src/sota_sources_2025_2026/
+src/sota_sources_dgc/
 
 # 模型、缓存和运行日志
 **/checkpoints/

@@ -50,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=Path("IDEA_TRIPLE_MODULAR_TOP5"))
     parser.add_argument("--device", default="auto")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--split-seed", type=int, default=None, help="固定外层五折索引的随机种子")
     parser.add_argument("--hidden-dim", type=int, default=32)
     parser.add_argument("--layers", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=128)
@@ -214,7 +215,8 @@ def main() -> None:
             mask = torch.isfinite(task_labels[:, task_index])
             metrics = linear_probe_five_fold_metrics(
                 embeddings[mask], task_labels[mask, task_index].long(),
-                device=device, seed=args.seed, folds=args.folds, epochs=args.probe_epochs,
+                device=device, seed=args.seed, split_seed=args.split_seed,
+                folds=args.folds, epochs=args.probe_epochs,
             )
             task_results.append({
                 "task_index": task_index,
@@ -231,6 +233,7 @@ def main() -> None:
             labels,
             device=device,
             seed=args.seed,
+            split_seed=args.split_seed,
             folds=args.folds,
             epochs=args.probe_epochs,
         )
@@ -256,6 +259,7 @@ def main() -> None:
         "fidelity": FIDELITY,
         "fixed_non_idea_parameters": {
             "seed": args.seed,
+            "split_seed": args.seed if args.split_seed is None else args.split_seed,
             "hidden_dim": args.hidden_dim,
             "layers": args.layers,
             "batch_size": args.batch_size,

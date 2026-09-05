@@ -123,6 +123,27 @@ class ModularTripleResearchIdeaBalanceGCL(nn.Module):
                 product *= max(model._parameter_controls()[1], 1e-3)
         return 0.2 / math.sqrt(max(product, 1e-3))
 
+    def _m7_hard_negative(
+        self,
+        model: ModularResearchIdeaBalanceGCL,
+        hard_input: Tensor,
+        first_bundle: dict[str, Tensor],
+    ) -> Tensor:
+        """M7 对困难负样本的默认处理；默认值保持旧公式不变。"""
+
+        del model, first_bundle
+        return F.normalize(hard_input, dim=-1)
+
+    def _weighted_auxiliary(
+        self,
+        model: ModularResearchIdeaBalanceGCL,
+        auxiliary: Tensor,
+    ) -> Tensor:
+        """计算单个 idea 的辅助项；默认值保持旧权重公式不变。"""
+
+        c_gain = model._parameter_controls()[2]
+        return model.auxiliary_weight * c_gain * auxiliary
+
     def idea_loss(self, first_data: Data, second_data: Data) -> tuple[Tensor, dict[str, float]]:
         first_history = self.encoder(first_data)
         second_history = self.encoder(second_data)
@@ -185,7 +206,7 @@ class ModularTripleResearchIdeaBalanceGCL(nn.Module):
             )
             anchor = F.normalize(anchor, dim=-1)
             positive = F.normalize(positive, dim=-1)
-            hard = F.normalize(hard_input, dim=-1)
+            hard = self._m7_hard_negative(model, hard_input, bundles["M7"][0])
             auxiliaries.append((model, auxiliary))
         else:
             anchor = F.normalize(self.first.projector(first_graph), dim=-1)
@@ -208,8 +229,7 @@ class ModularTripleResearchIdeaBalanceGCL(nn.Module):
         auxiliary_total = objective.new_zeros(())
         auxiliary_values = {idea_id: 0.0 for idea_id in self.idea_ids}
         for idea_model, auxiliary in auxiliaries:
-            c_gain = idea_model._parameter_controls()[2]
-            weighted = idea_model.auxiliary_weight * c_gain * auxiliary
+            weighted = self._weighted_auxiliary(idea_model, auxiliary)
             auxiliary_total = auxiliary_total + weighted
             auxiliary_values[idea_model.spec.idea_id] = float(auxiliary.detach())
         total = objective + auxiliary_total

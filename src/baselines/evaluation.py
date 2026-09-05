@@ -85,10 +85,11 @@ def linear_probe_five_fold_metrics(
     seed: int = 42,
     folds: int = 5,
     epochs: int = 200,
+    split_seed: int | None = None,
 ) -> dict[str, list[float]]:
     embeddings = embeddings.float().cpu()
     labels = labels.long().cpu()
-    split = stratified_folds(labels, folds, seed)
+    split = stratified_folds(labels, folds, seed if split_seed is None else split_seed)
     results = {key: [] for key in METRIC_KEYS}
 
     for fold, test_indices in enumerate(tqdm(split, desc="五折线性评测", unit="折"), start=1):
@@ -127,10 +128,12 @@ def linear_probe_five_fold(
     seed: int = 42,
     folds: int = 5,
     epochs: int = 200,
+    split_seed: int | None = None,
 ) -> list[float]:
     """兼容旧调用：只返回五折 Accuracy。"""
     return linear_probe_five_fold_metrics(
-        embeddings, labels, device=device, seed=seed, folds=folds, epochs=epochs
+        embeddings, labels, device=device, seed=seed, split_seed=split_seed,
+        folds=folds, epochs=epochs
     )["accuracy"]
 
 

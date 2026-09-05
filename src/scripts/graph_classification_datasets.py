@@ -1,4 +1,4 @@
-"""统一加载 TU 与 MoleculeNet 图分类数据集。"""
+"""统一加载 TU、MoleculeNet、TDC 与脑图分类数据集。"""
 
 from __future__ import annotations
 
@@ -18,8 +18,11 @@ TU_DATASETS = (
 )
 MOLECULENET_DATASETS = ("ClinTox", "BACE", "BBBP", "SIDER", "HIV", "Tox21")
 BRAIN_DATASETS = ("ABIDE", "ADHD200")
+TDC_DATASETS = (
+    "hERG_Karim", "CYP2D6_Veith", "CYP3A4_Veith", "Pgp_Broccatelli", "DILI",
+)
 MULTITASK_DATASETS = ("SIDER", "Tox21")
-GRAPH_CLASSIFICATION_DATASETS = TU_DATASETS + MOLECULENET_DATASETS + BRAIN_DATASETS
+GRAPH_CLASSIFICATION_DATASETS = TU_DATASETS + MOLECULENET_DATASETS + BRAIN_DATASETS + TDC_DATASETS
 
 
 def dataset_protocol(name: str) -> dict[str, object]:
@@ -66,6 +69,20 @@ def dataset_protocol(name: str) -> dict[str, object]:
             "source": "ADHD-200 Preprocessed Anatomical Dataset",
             "label_protocol": "all_ADHD_subtypes_vs_control_binary_classification",
             "graph_protocol": "normalized T1 fixed 6x6x6 patch graph",
+        }
+    if name in TDC_DATASETS:
+        endpoints = {
+            "hERG_Karim": "hERG_channel_blockade_cardiotoxicity",
+            "CYP2D6_Veith": "CYP2D6_inhibition_drug_metabolism",
+            "CYP3A4_Veith": "CYP3A4_inhibition_drug_metabolism",
+            "Pgp_Broccatelli": "Pgp_inhibition_absorption_and_drug_safety",
+            "DILI": "drug_induced_liver_injury",
+        }
+        return {
+            "source": "Therapeutics Data Commons via scikit-fingerprints mirror",
+            "label_protocol": "single_task_binary_classification",
+            "clinical_endpoint": endpoints[name],
+            "split_protocol": "project_stratified_5_fold",
         }
     return {
         "source": "PyG TUDataset",
@@ -116,6 +133,19 @@ def _load_brain(root: Path, name: str) -> tuple[list[Data], int, int]:
     return value["graphs"], int(value["in_dim"]), int(value["num_classes"])
 
 
+def _load_tdc(root: Path, name: str) -> tuple[list[Data], int, int]:
+    path = root / name / "processed" / "data.pt"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{name} 图缓存不存在：{path}；请先运行 download_tdc_medical_datasets.py。"
+        )
+    value = torch.load(path, map_location="cpu", weights_only=False)
+    graphs = [ensure_features(graph.clone()) for graph in value.get("graphs", [])]
+    if not graphs:
+        raise ValueError(f"{name} 图缓存为空：{path}")
+    return graphs, int(value["in_dim"]), int(value["num_classes"])
+
+
 def multitask_graphs(graphs: list[Data], task_index: int) -> list[Data]:
     """取一个多任务标签列并排除该列缺失样本，供独立五折使用。"""
     selected: list[Data] = []
@@ -158,6 +188,8 @@ def load_graphs(root: Path, name: str) -> tuple[list[Data], int, int]:
         return _load_moleculenet(root, name)
     if name in BRAIN_DATASETS:
         return _load_brain(root, name)
+    if name in TDC_DATASETS:
+        return _load_tdc(root, name)
     if name not in TU_DATASETS:
         raise ValueError(f"不支持的数据集：{name}")
 

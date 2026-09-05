@@ -77,6 +77,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/sota"))
     parser.add_argument("--device", default="auto", help="auto、cpu、cuda:0 等")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--split-seed", type=int, default=None, help="固定外层五折索引的随机种子")
     parser.add_argument("--folds", type=int, default=5)
     parser.add_argument("--hidden-dim", type=int, default=32)
     parser.add_argument("--layers", type=int, default=3)
@@ -207,7 +208,8 @@ def run_supervised(
     device: torch.device,
 ) -> dict:
     labels = torch.tensor([int(graph.y) for graph in graphs])
-    test_folds = stratified_folds(labels, args.folds, args.seed)
+    split_seed = args.seed if args.split_seed is None else args.split_seed
+    test_folds = stratified_folds(labels, args.folds, split_seed)
     epochs = args.epochs or DEFAULT_EPOCHS[method]
     batch_size = min(args.batch_size, 32 if dataset_name == "COLLAB" else args.batch_size)
     fold_metrics = {key: [] for key in METRIC_KEYS}
@@ -218,7 +220,7 @@ def run_supervised(
         all_indices = torch.arange(len(graphs))
         train_pool = all_indices[~torch.isin(all_indices, test_indices)]
         train_indices, val_indices = _inner_validation_indices(
-            labels, train_pool, args.seed + fold_index
+            labels, train_pool, split_seed + fold_index
         )
         train_loader = DataLoader([graphs[i] for i in train_indices], batch_size=batch_size, shuffle=True)
         val_loader = DataLoader([graphs[i] for i in val_indices], batch_size=batch_size, shuffle=False)
@@ -372,6 +374,7 @@ def run_contrastive(
     embeddings, labels = extract_contrastive_embeddings(model, graphs, batch_size, device)
     fold_metrics = linear_probe_five_fold_metrics(
         embeddings, labels, device=device, seed=args.seed,
+        split_seed=args.split_seed,
         folds=args.folds, epochs=args.probe_epochs,
     )
     return {
@@ -466,6 +469,7 @@ def main() -> None:
         result.update(
             {
                 "seed": args.seed,
+                "split_seed": args.seed if args.split_seed is None else args.split_seed,
                 "source_commit": SOURCE_COMMITS[method],
                 "implementation": "project_pyg_adapter",
                 "dataset_protocol": dataset_protocol(dataset_name),
