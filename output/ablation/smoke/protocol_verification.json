@@ -1,0 +1,7 @@
+{
+  "status": "passed",
+  "five_dataset_splits_disjoint": true,
+  "test_coverage_once": true,
+  "eight_smoke_validation_and_test_complete": true,
+  "independent_full_smoke_training_replay_exact": true
+}

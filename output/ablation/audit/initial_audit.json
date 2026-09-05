@@ -1,0 +1,227 @@
+{
+  "repo_root": "/home/Lim/Project-xmlg",
+  "git_commit": "7ca35b3eac359cb11968f5b22340db7baea3ea9a",
+  "initial_git_status_short": "?? AReT-GCL_ICLR2027_story.pdf\n",
+  "started_at": "2026-09-05T15:25:08.709525+00:00",
+  "gpu_initial": "Sat Sep  5 15:25:08 2026       \n+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 580.95.05              Driver Version: 580.95.05      CUDA Version: 13.0     |\n+-----------------------------------------+------------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n|                                         |                        |               MIG M. |\n|=========================================+========================+======================|\n|   0  NVIDIA GeForce RTX 4090        Off |   00000000:35:00.0 Off |                  Off |\n| 54%   61C    P2            191W /  450W |    3898MiB /  24564MiB |     54%      Default |\n|                                         |                        |                  N/A |\n+-----------------------------------------+------------------------+----------------------+\n|   1  NVIDIA GeForce RTX 4090        Off |   00000000:36:00.0 Off |                  Off |\n| 59%   64C    P2            180W /  450W |    4958MiB /  24564MiB |     49%      Default |\n|                                         |                        |                  N/A |\n+-----------------------------------------+------------------------+----------------------+\n\n+-----------------------------------------------------------------------------------------+\n| Processes:                                                                              |\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\n|        ID   ID                                                               Usage      |\n|=========================================================================================|\n|    0   N/A  N/A         1717265      C   python                                 3888MiB |\n|    1   N/A  N/A         1678162      C   python                                 4948MiB |\n+-----------------------------------------------------------------------------------------+\n",
+  "original_source_sha256": {
+    "src/models/modular_triple_research_ideas.py": "f8f0fbeffecbb64d7e28a2985cf8f437cc32ad621b11a3718a993a3ca688c17b",
+    "src/models/modular_research_ideas.py": "28032aaa07b569435510bf96a2ee0dc7f8ce8cc2dd629e5a9fbaf24573a71037",
+    "src/models/research_ideas.py": "ac850ddd5a17d1343915990a6204a34be014bc8a5d5fa0dd6c7a66c387a5fd9a",
+    "src/models/idea_parameter_registry.py": "40bc204b57956582fa9e12cceaf2dae3c075f5ac641dbc4c374c0320eb8e7475",
+    "src/models/sota_graph_models.py": "ce94a846efda110b32d381a50f28ce0ce09284d6800abb24651fdec7238126eb",
+    "src/models/balancegcl_modules.py": "cc8d80bfb0e80e61648b88a4e001be4d78e982963151910b79aa3c592b6e4dfa",
+    "src/baselines/evaluation.py": "935bb94e1199ad20554453d992a935967845f9589e3337591d6df248e66ad31c",
+    "src/baselines/gcl_baselines.py": "b7ce63d5ba10694811d2bcc939c2dff4da60ee1086cf2494876a94079382abc6",
+    "src/scripts/run_modular_idea_triple_trial.py": "0a68d774d47d33a90da64bcccbb7741ccc8af11c91f0530c6a4c7a4686a20dab",
+    "src/scripts/graph_classification_datasets.py": "83592bbba23b2289ae33b455f4e95c89eb1e0a73663de0e2ec431209f6f96451"
+  },
+  "original_settings": [
+    {
+      "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__NCI1.json",
+      "dataset": "NCI1",
+      "idea_ids": [
+        "D11-I01",
+        "D2-I09",
+        "D10-I10"
+      ],
+      "idea_parameters": [
+        {
+          "mask_budget": 0.05,
+          "reliability_reverse_gain": 0.5,
+          "mask_recoverability_threshold": 0.1
+        },
+        {
+          "cycle_conformal_alpha": 0.15,
+          "uncertain_cycle_weight": 0.25,
+          "calibration_fraction": 0.15
+        },
+        {
+          "persistence_path_points": 17.0,
+          "dictionary_atoms": 32.0,
+          "prototype_alignment_weight": 0.5
+        }
+      ],
+      "fixed_non_idea_parameters": {
+        "seed": 42,
+        "hidden_dim": 32,
+        "layers": 3,
+        "batch_size": 128,
+        "epochs": 40,
+        "probe_epochs": 200,
+        "folds": 5,
+        "optimizer": "Adam",
+        "learning_rate": 0.001,
+        "weight_decay": 1e-05,
+        "auxiliary_weight_per_idea": 0.25
+      },
+      "updated_at": "2026-08-28T03:03:39.015870+00:00"
+    },
+    {
+      "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__Mutagenicity.json",
+      "dataset": "Mutagenicity",
+      "idea_ids": [
+        "D11-I01",
+        "D2-I09",
+        "D10-I10"
+      ],
+      "idea_parameters": [
+        {
+          "mask_budget": 0.05,
+          "reliability_reverse_gain": 0.5,
+          "mask_recoverability_threshold": 0.1
+        },
+        {
+          "cycle_conformal_alpha": 0.15,
+          "uncertain_cycle_weight": 0.25,
+          "calibration_fraction": 0.15
+        },
+        {
+          "persistence_path_points": 17.0,
+          "dictionary_atoms": 32.0,
+          "prototype_alignment_weight": 0.5
+        }
+      ],
+      "fixed_non_idea_parameters": {
+        "seed": 42,
+        "hidden_dim": 32,
+        "layers": 3,
+        "batch_size": 128,
+        "epochs": 40,
+        "probe_epochs": 200,
+        "folds": 5,
+        "optimizer": "Adam",
+        "learning_rate": 0.001,
+        "weight_decay": 1e-05,
+        "auxiliary_weight_per_idea": 0.25
+      },
+      "updated_at": "2026-08-28T03:04:41.409232+00:00"
+    },
+    {
+      "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__COLLAB.json",
+      "dataset": "COLLAB",
+      "idea_ids": [
+        "D11-I01",
+        "D2-I09",
+        "D10-I10"
+      ],
+      "idea_parameters": [
+        {
+          "mask_budget": 0.05,
+          "reliability_reverse_gain": 0.5,
+          "mask_recoverability_threshold": 0.1
+        },
+        {
+          "cycle_conformal_alpha": 0.15,
+          "uncertain_cycle_weight": 0.25,
+          "calibration_fraction": 0.15
+        },
+        {
+          "persistence_path_points": 17.0,
+          "dictionary_atoms": 32.0,
+          "prototype_alignment_weight": 0.5
+        }
+      ],
+      "fixed_non_idea_parameters": {
+        "seed": 42,
+        "hidden_dim": 32,
+        "layers": 3,
+        "batch_size": 128,
+        "epochs": 40,
+        "probe_epochs": 200,
+        "folds": 5,
+        "optimizer": "Adam",
+        "learning_rate": 0.001,
+        "weight_decay": 1e-05,
+        "auxiliary_weight_per_idea": 0.25
+      },
+      "updated_at": "2026-08-28T03:08:49.362453+00:00"
+    },
+    {
+      "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__MUTAG.json",
+      "dataset": "MUTAG",
+      "idea_ids": [
+        "D11-I01",
+        "D2-I09",
+        "D10-I10"
+      ],
+      "idea_parameters": [
+        {
+          "mask_budget": 0.05,
+          "reliability_reverse_gain": 0.5,
+          "mask_recoverability_threshold": 0.1
+        },
+        {
+          "cycle_conformal_alpha": 0.15,
+          "uncertain_cycle_weight": 0.25,
+          "calibration_fraction": 0.15
+        },
+        {
+          "persistence_path_points": 17.0,
+          "dictionary_atoms": 32.0,
+          "prototype_alignment_weight": 0.5
+        }
+      ],
+      "fixed_non_idea_parameters": {
+        "seed": 42,
+        "hidden_dim": 32,
+        "layers": 3,
+        "batch_size": 128,
+        "epochs": 40,
+        "probe_epochs": 200,
+        "folds": 5,
+        "optimizer": "Adam",
+        "learning_rate": 0.001,
+        "weight_decay": 1e-05,
+        "auxiliary_weight_per_idea": 0.25
+      },
+      "updated_at": "2026-08-28T03:09:39.701255+00:00"
+    },
+    {
+      "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__PTC_MR.json",
+      "dataset": "PTC_MR",
+      "idea_ids": [
+        "D11-I01",
+        "D2-I09",
+        "D10-I10"
+      ],
+      "idea_parameters": [
+        {
+          "mask_budget": 0.05,
+          "reliability_reverse_gain": 0.5,
+          "mask_recoverability_threshold": 0.1
+        },
+        {
+          "cycle_conformal_alpha": 0.15,
+          "uncertain_cycle_weight": 0.25,
+          "calibration_fraction": 0.15
+        },
+        {
+          "persistence_path_points": 17.0,
+          "dictionary_atoms": 32.0,
+          "prototype_alignment_weight": 0.5
+        }
+      ],
+      "fixed_non_idea_parameters": {
+        "seed": 42,
+        "hidden_dim": 32,
+        "layers": 3,
+        "batch_size": 128,
+        "epochs": 40,
+        "probe_epochs": 200,
+        "folds": 5,
+        "optimizer": "Adam",
+        "learning_rate": 0.001,
+        "weight_decay": 1e-05,
+        "auxiliary_weight_per_idea": 0.25
+      },
+      "updated_at": "2026-08-28T03:09:57.724107+00:00"
+    }
+  ],
+  "unknown_original_settings": {
+    "multiple_training_seeds": "无法从仓库确认；五个指定数据集仅确认种子42",
+    "historical_environment_versions": "无法从仓库确认",
+    "independent_validation_split": "原评估代码没有独立验证集，也没有早停；不是缺失文件",
+    "historical_split_indices": "无法从仓库确认原始逐样本文件；可以按现行代码seed42重建"
+  }
+}

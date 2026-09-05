@@ -1,0 +1,145 @@
+{
+  "status": "completed",
+  "phase": "formal",
+  "configuration": "Backbone",
+  "dataset": "PTC_MR",
+  "seed": 0,
+  "switches": {
+    "use_acvg": false,
+    "use_rdtg": false,
+    "use_ltcp": false
+  },
+  "started_at": "2026-09-05T16:56:15.095334+00:00",
+  "ended_at": "2026-09-05T16:56:27.092389+00:00",
+  "duration_seconds": 11.997059802059084,
+  "git_commit": "7ca35b3eac359cb11968f5b22340db7baea3ea9a",
+  "code_sha256": {
+    "src/models/modular_triple_research_ideas.py": "f8f0fbeffecbb64d7e28a2985cf8f437cc32ad621b11a3718a993a3ca688c17b",
+    "src/models/modular_research_ideas.py": "28032aaa07b569435510bf96a2ee0dc7f8ce8cc2dd629e5a9fbaf24573a71037",
+    "src/models/research_ideas.py": "ac850ddd5a17d1343915990a6204a34be014bc8a5d5fa0dd6c7a66c387a5fd9a",
+    "src/models/idea_parameter_registry.py": "40bc204b57956582fa9e12cceaf2dae3c075f5ac641dbc4c374c0320eb8e7475",
+    "src/models/sota_graph_models.py": "ce94a846efda110b32d381a50f28ce0ce09284d6800abb24651fdec7238126eb",
+    "src/models/balancegcl_modules.py": "cc8d80bfb0e80e61648b88a4e001be4d78e982963151910b79aa3c592b6e4dfa",
+    "src/baselines/evaluation.py": "935bb94e1199ad20554453d992a935967845f9589e3337591d6df248e66ad31c",
+    "src/baselines/gcl_baselines.py": "b7ce63d5ba10694811d2bcc939c2dff4da60ee1086cf2494876a94079382abc6",
+    "src/scripts/run_modular_idea_triple_trial.py": "0a68d774d47d33a90da64bcccbb7741ccc8af11c91f0530c6a4c7a4686a20dab",
+    "src/scripts/graph_classification_datasets.py": "83592bbba23b2289ae33b455f4e95c89eb1e0a73663de0e2ec431209f6f96451",
+    "src/models/aret_gcl_ablation.py": "4599806a43a07a21ec9e99e4d69391a82a12577d906bddc11a9f56a406acbe60",
+    "src/scripts/run_aret_ablation.py": "c9b39c64adc3542aca5bf04deb057007ea148a6e7adc734314ecba99be31f95b",
+    "src/scripts/launch_aret_ablation.py": "15b769565346661f3d497ae350d47ecbbb6692ed915a47a9857351c84f9d5b92",
+    "src/scripts/summarize_aret_ablation.py": "14517ec0c306af96ccd3d57a977fb1ffb388bc0cde880674cbaa0006c767990d"
+  },
+  "split_sha256": "00a16c4486514f1d2c7bf19b3238b64e2421dc70d9baccfc646995642118cf5c",
+  "data_sha256": "82df210486db311fdb8c338801f5ffcdc3ebdbae5d40112472f8461089ae075c",
+  "initial_encoder_sha256": "04f9f9c343090725123db10847fa28a323f28ec031106546916e0d96568a7efb",
+  "settings": {
+    "hidden_dim": 32,
+    "layers": 3,
+    "projection_dim": 128,
+    "epochs": 40,
+    "probe_epochs": 200,
+    "batch_size": 128,
+    "collab_batch_size": 64,
+    "folds": 5,
+    "split_seed": 42,
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05,
+    "clip_grad_norm": 5.0,
+    "early_stopping": false,
+    "probe_learning_rate": 0.05,
+    "probe_weight_decay": 0.0001,
+    "num_workers": 0,
+    "torch_threads": 1,
+    "deterministic_algorithms": true,
+    "auxiliary_weight": 0.25,
+    "effective_batch_size": 128
+  },
+  "metrics": {
+    "ACC": 62.2436974789916,
+    "NMI": 5.772019843234448,
+    "ARI": 6.915957917550561,
+    "Macro-F1": 61.45426378376176
+  },
+  "fold_metrics": {
+    "ACC": [
+      67.14285714285714,
+      51.42857142857142,
+      73.52941176470588,
+      58.82352941176471,
+      60.29411764705882
+    ],
+    "NMI": [
+      7.999997315725094,
+      0.006165252609639451,
+      16.147341592244732,
+      2.1310865150023575,
+      2.5755085405904166
+    ],
+    "ARI": [
+      10.482038389015138,
+      -1.3645304385755583,
+      20.983257792988628,
+      1.6671445793905448,
+      2.811879264934056
+    ],
+    "Macro-F1": [
+      65.96913971676179,
+      50.416666666666664,
+      73.15789473684211,
+      58.500435919790746,
+      59.227181878747494
+    ]
+  },
+  "validation_diagnostics": [
+    {
+      "fold": 1,
+      "training_loss": 0.4075494706630707,
+      "validation_loss": 1.1564736366271973,
+      "epochs": 200
+    },
+    {
+      "fold": 2,
+      "training_loss": 0.4247346520423889,
+      "validation_loss": 0.9792859554290771,
+      "epochs": 200
+    },
+    {
+      "fold": 3,
+      "training_loss": 0.4690704941749573,
+      "validation_loss": 0.8937574028968811,
+      "epochs": 200
+    },
+    {
+      "fold": 4,
+      "training_loss": 0.4153015911579132,
+      "validation_loss": 1.2947914600372314,
+      "epochs": 200
+    },
+    {
+      "fold": 5,
+      "training_loss": 0.41070982813835144,
+      "validation_loss": 0.9927224516868591,
+      "epochs": 200
+    }
+  ],
+  "diagnostic_path": "/home/Lim/Project-xmlg/output/ablation/diagnostics/Backbone__PTC_MR__seed0.json",
+  "checkpoint_path": "/home/Lim/Project-xmlg/output/ablation/checkpoints/Backbone__PTC_MR__seed0.pt",
+  "parameter_count": 355329,
+  "device": "cuda:0",
+  "cuda_peak_memory_mib": 94.4296875,
+  "command": [
+    "/home/Lim/Project-xmlg/src/scripts/run_aret_ablation.py",
+    "run",
+    "--phase",
+    "formal",
+    "--configuration",
+    "Backbone",
+    "--dataset",
+    "PTC_MR",
+    "--seed",
+    "0",
+    "--device",
+    "cuda:0"
+  ]
+}

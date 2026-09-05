@@ -4,6 +4,24 @@ pre_weights/
 
 # 大规模实验产物；论文与顶层汇总文档单独保留
 outputs/
+# 新消融目录仅发布轻量结果与审计材料，不发布实时状态、日志和模型权重。
+/output/*
+!/output/ablation/
+/output/ablation/*
+!/output/ablation/*.md
+!/output/ablation/*.csv
+!/output/ablation/*.tex
+!/output/ablation/run_manifest.json
+!/output/ablation/acceptance.json
+!/output/ablation/audit/
+!/output/ablation/jobs/
+!/output/ablation/diagnostics/
+!/output/ablation/splits/
+!/output/ablation/smoke/
+/output/ablation/smoke/*
+!/output/ablation/smoke/*verification.json
+!/output/ablation/smoke/jobs/
+!/output/ablation/smoke/diagnostics/
 IDEA_PAIRWISE/
 IDEA_PAIRWISE_MODULAR/
 IDEA_PAIRWISE_SMOKE/

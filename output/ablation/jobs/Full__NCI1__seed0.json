@@ -1,0 +1,145 @@
+{
+  "status": "completed",
+  "phase": "formal",
+  "configuration": "Full",
+  "dataset": "NCI1",
+  "seed": 0,
+  "switches": {
+    "use_acvg": true,
+    "use_rdtg": true,
+    "use_ltcp": true
+  },
+  "started_at": "2026-09-05T16:33:37.883117+00:00",
+  "ended_at": "2026-09-05T16:36:07.991283+00:00",
+  "duration_seconds": 150.1081705999095,
+  "git_commit": "7ca35b3eac359cb11968f5b22340db7baea3ea9a",
+  "code_sha256": {
+    "src/models/modular_triple_research_ideas.py": "f8f0fbeffecbb64d7e28a2985cf8f437cc32ad621b11a3718a993a3ca688c17b",
+    "src/models/modular_research_ideas.py": "28032aaa07b569435510bf96a2ee0dc7f8ce8cc2dd629e5a9fbaf24573a71037",
+    "src/models/research_ideas.py": "ac850ddd5a17d1343915990a6204a34be014bc8a5d5fa0dd6c7a66c387a5fd9a",
+    "src/models/idea_parameter_registry.py": "40bc204b57956582fa9e12cceaf2dae3c075f5ac641dbc4c374c0320eb8e7475",
+    "src/models/sota_graph_models.py": "ce94a846efda110b32d381a50f28ce0ce09284d6800abb24651fdec7238126eb",
+    "src/models/balancegcl_modules.py": "cc8d80bfb0e80e61648b88a4e001be4d78e982963151910b79aa3c592b6e4dfa",
+    "src/baselines/evaluation.py": "935bb94e1199ad20554453d992a935967845f9589e3337591d6df248e66ad31c",
+    "src/baselines/gcl_baselines.py": "b7ce63d5ba10694811d2bcc939c2dff4da60ee1086cf2494876a94079382abc6",
+    "src/scripts/run_modular_idea_triple_trial.py": "0a68d774d47d33a90da64bcccbb7741ccc8af11c91f0530c6a4c7a4686a20dab",
+    "src/scripts/graph_classification_datasets.py": "83592bbba23b2289ae33b455f4e95c89eb1e0a73663de0e2ec431209f6f96451",
+    "src/models/aret_gcl_ablation.py": "4599806a43a07a21ec9e99e4d69391a82a12577d906bddc11a9f56a406acbe60",
+    "src/scripts/run_aret_ablation.py": "c9b39c64adc3542aca5bf04deb057007ea148a6e7adc734314ecba99be31f95b",
+    "src/scripts/launch_aret_ablation.py": "15b769565346661f3d497ae350d47ecbbb6692ed915a47a9857351c84f9d5b92",
+    "src/scripts/summarize_aret_ablation.py": "14517ec0c306af96ccd3d57a977fb1ffb388bc0cde880674cbaa0006c767990d"
+  },
+  "split_sha256": "732066f12d1096a6ec16ed075f0f4a3c34e95443373dabf5da22c785d7897efe",
+  "data_sha256": "e7f141d842313531a877c67c9bfc6c775e4506775c0db74486b7f965eef562fa",
+  "initial_encoder_sha256": "97b0184e7c21325adc5c8bb81ef9a5ebb2ec074c9be9a8de28b1acd28e3f2841",
+  "settings": {
+    "hidden_dim": 32,
+    "layers": 3,
+    "projection_dim": 128,
+    "epochs": 40,
+    "probe_epochs": 200,
+    "batch_size": 128,
+    "collab_batch_size": 64,
+    "folds": 5,
+    "split_seed": 42,
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05,
+    "clip_grad_norm": 5.0,
+    "early_stopping": false,
+    "probe_learning_rate": 0.05,
+    "probe_weight_decay": 0.0001,
+    "num_workers": 0,
+    "torch_threads": 1,
+    "deterministic_algorithms": true,
+    "auxiliary_weight": 0.25,
+    "effective_batch_size": 128
+  },
+  "metrics": {
+    "ACC": 73.89329855090162,
+    "NMI": 17.381924645891946,
+    "ARI": 22.81928600963682,
+    "Macro-F1": 73.8624155416315
+  },
+  "fold_metrics": {
+    "ACC": [
+      72.78250303766707,
+      75.33414337788578,
+      71.77615571776155,
+      74.42143727161998,
+      75.1522533495737
+    ],
+    "NMI": [
+      15.758659487604874,
+      19.765335997154786,
+      14.20395722104581,
+      18.039284100719897,
+      19.14238642293435
+    ],
+    "ARI": [
+      20.665985067709563,
+      25.583186073466063,
+      18.86945313459955,
+      23.76350227365197,
+      25.21430349875696
+    ],
+    "Macro-F1": [
+      72.72738031836204,
+      75.26973718295056,
+      71.75943751073622,
+      74.4077306733167,
+      75.14779202279203
+    ]
+  },
+  "validation_diagnostics": [
+    {
+      "fold": 1,
+      "training_loss": 0.5027434229850769,
+      "validation_loss": 0.5280410647392273,
+      "epochs": 200
+    },
+    {
+      "fold": 2,
+      "training_loss": 0.5061025619506836,
+      "validation_loss": 0.5546144247055054,
+      "epochs": 200
+    },
+    {
+      "fold": 3,
+      "training_loss": 0.49254563450813293,
+      "validation_loss": 0.5691215395927429,
+      "epochs": 200
+    },
+    {
+      "fold": 4,
+      "training_loss": 0.5087209343910217,
+      "validation_loss": 0.509918749332428,
+      "epochs": 200
+    },
+    {
+      "fold": 5,
+      "training_loss": 0.5100888609886169,
+      "validation_loss": 0.5622715950012207,
+      "epochs": 200
+    }
+  ],
+  "diagnostic_path": "/home/Lim/Project-xmlg/output/ablation/diagnostics/Full__NCI1__seed0.json",
+  "checkpoint_path": "/home/Lim/Project-xmlg/output/ablation/checkpoints/Full__NCI1__seed0.pt",
+  "parameter_count": 355937,
+  "device": "cuda:1",
+  "cuda_peak_memory_mib": 120.14208984375,
+  "command": [
+    "/home/Lim/Project-xmlg/src/scripts/run_aret_ablation.py",
+    "run",
+    "--phase",
+    "formal",
+    "--configuration",
+    "Full",
+    "--dataset",
+    "NCI1",
+    "--seed",
+    "0",
+    "--device",
+    "cuda:1"
+  ]
+}

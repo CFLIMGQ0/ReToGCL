@@ -8,9 +8,15 @@ CITA-GCL（Cleanliness-Informed Topological Alignment for Graph Contrastive Lear
 
 原始 ReToGCL 的英文论文草稿、公式、训练伪代码及历史 18 数据集结果矩阵位于 `paper_retogcl/`；该草稿不因本次更名自动成为 CITA-GCL 的论文或结果。
 
+## 当前项目状态
+
+最新进展与实验口径见 [PROJECT_STATUS.md](PROJECT_STATUS.md)。CITA-GCL/ReToGCL 的新增医学数据、经典直接基线及十随机种子复核已完成，共 489 项任务；另有一套使用不同 Idea 组合的 AReT-GCL 模块消融正在运行，阶段结果见 [消融结果表](output/ablation/ablation_table.md)，不能与 CITA-GCL 的结果混用。GitHub 中的进度是提交时的快照，不会随服务器训练自动更新。
+
 ## 仓库内容说明
 
 本仓库保留核心代码、配置、实验说明、结果汇总和论文文件。数据集、模型权重、训练缓存、运行日志以及第三方源码镜像不纳入 Git；请根据 `DATASETS.md` 和相应下载脚本在本地准备数据。
+
+`output/ablation/` 仅发布轻量消融结果、固定折索引和审计材料；其检查点、日志、进程锁及实时状态留在本地。`outputs/` 下的大规模历史运行产物仍不发布。
 
 ## 整体流程
 

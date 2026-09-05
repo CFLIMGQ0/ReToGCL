@@ -1,0 +1,202 @@
+[
+  {
+    "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__NCI1.json",
+    "dataset": "NCI1",
+    "idea_ids": [
+      "D11-I01",
+      "D2-I09",
+      "D10-I10"
+    ],
+    "idea_parameters": [
+      {
+        "mask_budget": 0.05,
+        "reliability_reverse_gain": 0.5,
+        "mask_recoverability_threshold": 0.1
+      },
+      {
+        "cycle_conformal_alpha": 0.15,
+        "uncertain_cycle_weight": 0.25,
+        "calibration_fraction": 0.15
+      },
+      {
+        "persistence_path_points": 17.0,
+        "dictionary_atoms": 32.0,
+        "prototype_alignment_weight": 0.5
+      }
+    ],
+    "fixed_non_idea_parameters": {
+      "seed": 42,
+      "hidden_dim": 32,
+      "layers": 3,
+      "batch_size": 128,
+      "epochs": 40,
+      "probe_epochs": 200,
+      "folds": 5,
+      "optimizer": "Adam",
+      "learning_rate": 0.001,
+      "weight_decay": 1e-05,
+      "auxiliary_weight_per_idea": 0.25
+    },
+    "updated_at": "2026-08-28T03:03:39.015870+00:00"
+  },
+  {
+    "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__Mutagenicity.json",
+    "dataset": "Mutagenicity",
+    "idea_ids": [
+      "D11-I01",
+      "D2-I09",
+      "D10-I10"
+    ],
+    "idea_parameters": [
+      {
+        "mask_budget": 0.05,
+        "reliability_reverse_gain": 0.5,
+        "mask_recoverability_threshold": 0.1
+      },
+      {
+        "cycle_conformal_alpha": 0.15,
+        "uncertain_cycle_weight": 0.25,
+        "calibration_fraction": 0.15
+      },
+      {
+        "persistence_path_points": 17.0,
+        "dictionary_atoms": 32.0,
+        "prototype_alignment_weight": 0.5
+      }
+    ],
+    "fixed_non_idea_parameters": {
+      "seed": 42,
+      "hidden_dim": 32,
+      "layers": 3,
+      "batch_size": 128,
+      "epochs": 40,
+      "probe_epochs": 200,
+      "folds": 5,
+      "optimizer": "Adam",
+      "learning_rate": 0.001,
+      "weight_decay": 1e-05,
+      "auxiliary_weight_per_idea": 0.25
+    },
+    "updated_at": "2026-08-28T03:04:41.409232+00:00"
+  },
+  {
+    "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__COLLAB.json",
+    "dataset": "COLLAB",
+    "idea_ids": [
+      "D11-I01",
+      "D2-I09",
+      "D10-I10"
+    ],
+    "idea_parameters": [
+      {
+        "mask_budget": 0.05,
+        "reliability_reverse_gain": 0.5,
+        "mask_recoverability_threshold": 0.1
+      },
+      {
+        "cycle_conformal_alpha": 0.15,
+        "uncertain_cycle_weight": 0.25,
+        "calibration_fraction": 0.15
+      },
+      {
+        "persistence_path_points": 17.0,
+        "dictionary_atoms": 32.0,
+        "prototype_alignment_weight": 0.5
+      }
+    ],
+    "fixed_non_idea_parameters": {
+      "seed": 42,
+      "hidden_dim": 32,
+      "layers": 3,
+      "batch_size": 128,
+      "epochs": 40,
+      "probe_epochs": 200,
+      "folds": 5,
+      "optimizer": "Adam",
+      "learning_rate": 0.001,
+      "weight_decay": 1e-05,
+      "auxiliary_weight_per_idea": 0.25
+    },
+    "updated_at": "2026-08-28T03:08:49.362453+00:00"
+  },
+  {
+    "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__MUTAG.json",
+    "dataset": "MUTAG",
+    "idea_ids": [
+      "D11-I01",
+      "D2-I09",
+      "D10-I10"
+    ],
+    "idea_parameters": [
+      {
+        "mask_budget": 0.05,
+        "reliability_reverse_gain": 0.5,
+        "mask_recoverability_threshold": 0.1
+      },
+      {
+        "cycle_conformal_alpha": 0.15,
+        "uncertain_cycle_weight": 0.25,
+        "calibration_fraction": 0.15
+      },
+      {
+        "persistence_path_points": 17.0,
+        "dictionary_atoms": 32.0,
+        "prototype_alignment_weight": 0.5
+      }
+    ],
+    "fixed_non_idea_parameters": {
+      "seed": 42,
+      "hidden_dim": 32,
+      "layers": 3,
+      "batch_size": 128,
+      "epochs": 40,
+      "probe_epochs": 200,
+      "folds": 5,
+      "optimizer": "Adam",
+      "learning_rate": 0.001,
+      "weight_decay": 1e-05,
+      "auxiliary_weight_per_idea": 0.25
+    },
+    "updated_at": "2026-08-28T03:09:39.701255+00:00"
+  },
+  {
+    "source": "IDEA_TRIPLE_MODULAR_TOP5/jobs/D11-I01__D2-I09__D10-I10__PTC_MR.json",
+    "dataset": "PTC_MR",
+    "idea_ids": [
+      "D11-I01",
+      "D2-I09",
+      "D10-I10"
+    ],
+    "idea_parameters": [
+      {
+        "mask_budget": 0.05,
+        "reliability_reverse_gain": 0.5,
+        "mask_recoverability_threshold": 0.1
+      },
+      {
+        "cycle_conformal_alpha": 0.15,
+        "uncertain_cycle_weight": 0.25,
+        "calibration_fraction": 0.15
+      },
+      {
+        "persistence_path_points": 17.0,
+        "dictionary_atoms": 32.0,
+        "prototype_alignment_weight": 0.5
+      }
+    ],
+    "fixed_non_idea_parameters": {
+      "seed": 42,
+      "hidden_dim": 32,
+      "layers": 3,
+      "batch_size": 128,
+      "epochs": 40,
+      "probe_epochs": 200,
+      "folds": 5,
+      "optimizer": "Adam",
+      "learning_rate": 0.001,
+      "weight_decay": 1e-05,
+      "auxiliary_weight_per_idea": 0.25
+    },
+    "updated_at": "2026-08-28T03:09:57.724107+00:00"
+  }
+]

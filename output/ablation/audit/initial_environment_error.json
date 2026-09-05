@@ -1,0 +1,6 @@
+{
+  "stage": "运行前导入审计，非训练失败",
+  "error": "sklearn导入失败：系统/lib/x86_64-linux-gnu/libstdc++.so.6缺少CXXABI_1.3.15",
+  "resolution": "仅对子进程设置当前Conda环境的LD_LIBRARY_PATH；sklearn 1.9.0、scipy 1.18.0导入成功",
+  "system_libraries_modified": false
+}

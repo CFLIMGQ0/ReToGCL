@@ -1,0 +1,2 @@
+# 消融 CSV 由标准库生成 CRLF；Git 中统一为 LF，不改变指标内容。
+output/ablation/*.csv text eol=lf

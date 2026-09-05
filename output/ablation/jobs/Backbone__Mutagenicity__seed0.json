@@ -1,0 +1,145 @@
+{
+  "status": "completed",
+  "phase": "formal",
+  "configuration": "Backbone",
+  "dataset": "Mutagenicity",
+  "seed": 0,
+  "switches": {
+    "use_acvg": false,
+    "use_rdtg": false,
+    "use_ltcp": false
+  },
+  "started_at": "2026-09-05T16:52:16.415820+00:00",
+  "ended_at": "2026-09-05T16:54:52.361273+00:00",
+  "duration_seconds": 155.94545703800395,
+  "git_commit": "7ca35b3eac359cb11968f5b22340db7baea3ea9a",
+  "code_sha256": {
+    "src/models/modular_triple_research_ideas.py": "f8f0fbeffecbb64d7e28a2985cf8f437cc32ad621b11a3718a993a3ca688c17b",
+    "src/models/modular_research_ideas.py": "28032aaa07b569435510bf96a2ee0dc7f8ce8cc2dd629e5a9fbaf24573a71037",
+    "src/models/research_ideas.py": "ac850ddd5a17d1343915990a6204a34be014bc8a5d5fa0dd6c7a66c387a5fd9a",
+    "src/models/idea_parameter_registry.py": "40bc204b57956582fa9e12cceaf2dae3c075f5ac641dbc4c374c0320eb8e7475",
+    "src/models/sota_graph_models.py": "ce94a846efda110b32d381a50f28ce0ce09284d6800abb24651fdec7238126eb",
+    "src/models/balancegcl_modules.py": "cc8d80bfb0e80e61648b88a4e001be4d78e982963151910b79aa3c592b6e4dfa",
+    "src/baselines/evaluation.py": "935bb94e1199ad20554453d992a935967845f9589e3337591d6df248e66ad31c",
+    "src/baselines/gcl_baselines.py": "b7ce63d5ba10694811d2bcc939c2dff4da60ee1086cf2494876a94079382abc6",
+    "src/scripts/run_modular_idea_triple_trial.py": "0a68d774d47d33a90da64bcccbb7741ccc8af11c91f0530c6a4c7a4686a20dab",
+    "src/scripts/graph_classification_datasets.py": "83592bbba23b2289ae33b455f4e95c89eb1e0a73663de0e2ec431209f6f96451",
+    "src/models/aret_gcl_ablation.py": "4599806a43a07a21ec9e99e4d69391a82a12577d906bddc11a9f56a406acbe60",
+    "src/scripts/run_aret_ablation.py": "c9b39c64adc3542aca5bf04deb057007ea148a6e7adc734314ecba99be31f95b",
+    "src/scripts/launch_aret_ablation.py": "15b769565346661f3d497ae350d47ecbbb6692ed915a47a9857351c84f9d5b92",
+    "src/scripts/summarize_aret_ablation.py": "14517ec0c306af96ccd3d57a977fb1ffb388bc0cde880674cbaa0006c767990d"
+  },
+  "split_sha256": "50de8558a04013f9a521e9ba8c01ade39498acaffab1cc78aa1f0f182b3f54a9",
+  "data_sha256": "2343d9a922daaa920812e2d8d48dc75561256a74074648531a9df3eb22b7b97b",
+  "initial_encoder_sha256": "45ab55ef14e442a64057a8163057a1410acaa681ff8f51554e9b8161683db399",
+  "settings": {
+    "hidden_dim": 32,
+    "layers": 3,
+    "projection_dim": 128,
+    "epochs": 40,
+    "probe_epochs": 200,
+    "batch_size": 128,
+    "collab_batch_size": 64,
+    "folds": 5,
+    "split_seed": 42,
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05,
+    "clip_grad_norm": 5.0,
+    "early_stopping": false,
+    "probe_learning_rate": 0.05,
+    "probe_weight_decay": 0.0001,
+    "num_workers": 0,
+    "torch_threads": 1,
+    "deterministic_algorithms": true,
+    "auxiliary_weight": 0.25,
+    "effective_batch_size": 128
+  },
+  "metrics": {
+    "ACC": 76.80277878429514,
+    "NMI": 21.57928283503429,
+    "ARI": 28.75819378323309,
+    "Macro-F1": 76.47648352420019
+  },
+  "fold_metrics": {
+    "ACC": [
+      79.97698504027618,
+      75.4325259515571,
+      76.58592848904267,
+      75.20184544405998,
+      76.8166089965398
+    ],
+    "NMI": [
+      27.368331861760154,
+      19.073499529159253,
+      21.153492040969464,
+      18.702073529417763,
+      21.59901721386482
+    ],
+    "ARI": [
+      35.864165866420706,
+      25.772323703516598,
+      28.184309858286294,
+      25.291315506637922,
+      28.678853981303927
+    ],
+    "Macro-F1": [
+      79.7450007501554,
+      75.04530252356338,
+      76.35326410432451,
+      74.63149285032846,
+      76.60735739262918
+    ]
+  },
+  "validation_diagnostics": [
+    {
+      "fold": 1,
+      "training_loss": 0.4708510637283325,
+      "validation_loss": 0.5228310823440552,
+      "epochs": 200
+    },
+    {
+      "fold": 2,
+      "training_loss": 0.45858144760131836,
+      "validation_loss": 0.5064745545387268,
+      "epochs": 200
+    },
+    {
+      "fold": 3,
+      "training_loss": 0.45465558767318726,
+      "validation_loss": 0.5371803641319275,
+      "epochs": 200
+    },
+    {
+      "fold": 4,
+      "training_loss": 0.46229496598243713,
+      "validation_loss": 0.487766295671463,
+      "epochs": 200
+    },
+    {
+      "fold": 5,
+      "training_loss": 0.4831080138683319,
+      "validation_loss": 0.4621235132217407,
+      "epochs": 200
+    }
+  ],
+  "diagnostic_path": "/home/Lim/Project-xmlg/output/ablation/diagnostics/Backbone__Mutagenicity__seed0.json",
+  "checkpoint_path": "/home/Lim/Project-xmlg/output/ablation/checkpoints/Backbone__Mutagenicity__seed0.pt",
+  "parameter_count": 355201,
+  "device": "cuda:1",
+  "cuda_peak_memory_mib": 121.72802734375,
+  "command": [
+    "/home/Lim/Project-xmlg/src/scripts/run_aret_ablation.py",
+    "run",
+    "--phase",
+    "formal",
+    "--configuration",
+    "Backbone",
+    "--dataset",
+    "Mutagenicity",
+    "--seed",
+    "0",
+    "--device",
+    "cuda:1"
+  ]
+}
